@@ -133,6 +133,10 @@ function createApp(opts = {}) {
     const ins = db.prepare('INSERT INTO menu_items (name, cat, price, opts, pos) VALUES (?, ?, ?, ?, ?)');
     tx(db, () => DEMO_MENU.forEach((m, i) => ins.run(m[0], m[1], m[2], m[3], i + 1)));
     log('ใส่เมนูตัวอย่างให้แล้ว ' + DEMO_MENU.length + ' รายการ (แก้ได้ในหน้าเมนูของสำนักงานใหญ่)');
+  }
+  // ฐานข้อมูลที่อัปเกรดมาจากเวอร์ชันก่อนสต๊อก (มีเมนูแล้วแต่ยังไม่มีวัตถุดิบ) ก็ใส่วัตถุดิบ/สูตรตัวอย่างให้ด้วย
+  if (!db.prepare('SELECT 1 AS x FROM ingredients LIMIT 1').get() && db.prepare('SELECT 1 AS x FROM menu_items LIMIT 1').get() &&
+      (opts.seedMenu !== undefined ? opts.seedMenu : process.env.SEED_MENU !== '0')) {
     tx(db, () => {
       const ing = {};
       DEMO_ING.forEach((x, i) => { ing[x[0]] = Number(db.prepare('INSERT INTO ingredients (name, unit, cost, pos) VALUES (?, ?, ?, ?)').run(x[0], x[1], x[2], i + 1).lastInsertRowid); });
