@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="app-version" content="{{VERSION}}">
+<meta name="theme-color" content="#2f6b4f">
+<title>{{SHOP}} · ระบบขายหน้าร้าน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f3ec;--card:#fffdf8;--ink:#2a2620;--mute:#6f685c;--line:#e4ddcf;
+  --tea:#2f6b4f;--tea-ink:#fff;--tea-soft:#dfeee5;--cof:#7a4a2b;--cof-soft:#f0e2d4;
+  --bad:#b3372b;--bad-soft:#f8e1de;--warn:#8a5a00;--warn-soft:#fbefcf;--shadow:0 1px 2px rgba(40,30,10,.08),0 4px 16px rgba(40,30,10,.06);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#17150f;--card:#221f18;--ink:#f1ebdd;--mute:#a79f8d;--line:#3a352a;
+  --tea:#5fae88;--tea-ink:#10241a;--tea-soft:#1f3a2c;--cof:#d49a6a;--cof-soft:#3a2a1d;
+  --bad:#ef7d70;--bad-soft:#402420;--warn:#e6b85a;--warn-soft:#3a3016;--shadow:none;}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font:15px/1.5 'Prompt',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+[hidden]{display:none!important}
+button{cursor:pointer}
+.wrap{max-width:1180px;margin:0 auto;padding:0 max(14px,env(safe-area-inset-left)) 0 max(14px,env(safe-area-inset-right))}
+header.top{position:sticky;top:0;z-index:20;background:var(--tea);color:var(--tea-ink);padding-top:env(safe-area-inset-top)}
+header.top .wrap{display:flex;align-items:center;gap:10px;min-height:52px;flex-wrap:wrap}
+header.top h1{margin:0;font-size:17px;font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header.top .sub{font-weight:400;opacity:.85;font-size:13px}
+.hbtn{background:rgba(255,255,255,.16);border:0;color:inherit;border-radius:999px;padding:6px 14px;min-height:36px}
+nav.tabs{display:flex;gap:4px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:calc(52px + env(safe-area-inset-top));z-index:15;overflow-x:auto}
+nav.tabs .wrap{display:flex;gap:4px;width:100%}
+nav.tabs button{flex:1;min-width:max-content;background:none;border:0;border-bottom:3px solid transparent;padding:11px 14px;color:var(--mute);font-weight:500;white-space:nowrap}
+nav.tabs button[aria-selected=true]{color:var(--tea);border-color:var(--tea)}
+main{padding:14px 0 90px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.mute{color:var(--mute)}.small{font-size:13px}.b{font-weight:600}.num{font-variant-numeric:tabular-nums}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 14px;min-height:42px}
+.btn.pri{background:var(--tea);border-color:var(--tea);color:var(--tea-ink);font-weight:500}
+.btn.bad{color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn{color:var(--ink)}
+.btn.pri{color:var(--tea-ink)}
+.btn.sm{min-height:34px;padding:5px 11px;font-size:13px}
+input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:42px}
+label.f{display:block;margin:0 0 12px}
+label.f>span{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
+.err{background:var(--bad-soft);color:var(--bad);border-radius:10px;padding:9px 12px;margin:0 0 12px}
+.ok{background:var(--tea-soft);color:var(--tea);border-radius:10px;padding:9px 12px;margin:0 0 12px}
+.warnbox{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:9px 12px;margin:0 0 12px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;white-space:nowrap}
+.chip[aria-pressed=true]{background:var(--tea);color:var(--tea-ink);border-color:var(--tea)}
+/* ขาย */
+.sell>*{min-width:0}
+.sell{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:84px;display:flex;flex-direction:column;justify-content:space-between;gap:6px;position:relative}
+.tile .p{color:var(--cof);font-weight:600}
+.tile.out{opacity:.5}
+.tile .tag{position:absolute;top:8px;right:8px;background:var(--bad-soft);color:var(--bad);font-size:11px;border-radius:6px;padding:0 6px}
+.cart{position:sticky;top:112px}
+.cl{display:flex;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.qty{display:flex;align-items:center;gap:6px}
+.qty button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--card);line-height:1}
+.total{font-size:22px;font-weight:600}
+.cartbar{display:none}
+.cartbar-close{display:none}
+@media (max-width:820px){
+  .sell{grid-template-columns:minmax(0,1fr)}
+  .cart{display:none;position:static}
+  .cartbar-close{display:inline-block}
+  .cart.open{display:block;position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto;padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 30px max(14px,env(safe-area-inset-left))}
+  .cartbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--tea);color:var(--tea-ink);padding:12px max(16px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));justify-content:space-between;align-items:center;border:0;width:100%;font-weight:600}
+}
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.sheet{min-width:0;background:var(--card);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px max(18px,env(safe-area-inset-left)) calc(18px + env(safe-area-inset-bottom))}
+@media (min-width:600px){.scrim{align-items:center}.sheet{border-radius:18px}}
+.sheet h2{margin:0 0 12px;font-size:18px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 14px;min-height:40px}
+.seg button[aria-pressed=true]{background:var(--tea);color:var(--tea-ink);border-color:var(--tea)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--tea-soft);border-radius:12px;padding:12px}
+.stat .v{font-size:22px;font-weight:600;color:var(--tea)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--mute);font-weight:500}
+td.r,th.r{text-align:right}
+.tw{overflow-x:auto}
+.bar{height:8px;border-radius:4px;background:var(--tea);min-width:2px}
+.pill{display:inline-block;font-size:12px;border-radius:999px;padding:1px 10px;background:var(--tea-soft);color:var(--tea)}
+.pill.off{background:var(--warn-soft);color:var(--warn)}
+.pill.void{background:var(--bad-soft);color:var(--bad)}
+.stack>*+*{margin-top:12px}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login .card{width:100%;max-width:380px}
+.login h1{margin:0 0 4px;color:var(--tea);font-size:24px}
+.banner{position:fixed;left:0;right:0;bottom:0;z-index:80;background:var(--cof);color:#fff;padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;gap:12px;align-items:center;justify-content:center}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + env(safe-area-inset-bottom));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;z-index:90;max-width:90vw}
+.cred{font:600 17px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px dashed var(--tea);border-radius:10px;padding:10px;word-break:break-all;user-select:all}
+.receipt{font:13px/1.5 ui-monospace,Menlo,Consolas,'Prompt',monospace;white-space:pre-wrap;background:var(--bg);border-radius:10px;padding:12px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function () {
+'use strict';
+var APP_VERSION = document.querySelector('meta[name=app-version]').content;
+var SHOP = document.title.split(' · ')[0];
+var $app = document.getElementById('app');
+
+/* ---------- ตัวช่วย ---------- */
+function h(tag, props) {
+  var el = document.createElement(tag);
+  props = props || {};
+  Object.keys(props).forEach(function (k) {
+    var v = props[k];
+    if (v == null || v === false) return;
+    if (k === 'class') el.className = v;
+    else if (k === 'text') el.textContent = v;
+    else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2), v);
+    else if (k === 'value') el.value = v;
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, v);
+  });
+  for (var i = 2; i < arguments.length; i++) add(el, arguments[i]);
+  return el;
+}
+function add(el, c) {
+  if (c == null || c === false) return;
+  if (Array.isArray(c)) c.forEach(function (x) { add(el, x); });
+  else el.appendChild(typeof c === 'object' ? c : document.createTextNode(String(c)));
+}
+function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+var baht = function (n) { return '฿' + Number(n || 0).toLocaleString('th-TH'); };
+function uid() {
+  try { if (crypto.randomUUID) return crypto.randomUUID(); } catch (e) { /* ignore */ }
+  return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+}
+function toast(msg) {
+  var t = h('div', { class: 'toast', text: msg });
+  document.body.appendChild(t);
+  setTimeout(function () { t.remove(); }, 2600);
+}
+function api(method, url, body) {
+  return fetch(url, {
+    method: method, credentials: 'same-origin',
+    headers: body !== undefined ? { 'Content-Type': 'application/json' } : {},
+    body: body !== undefined ? JSON.stringify(body) : undefined
+  }).then(function (res) {
+    return res.text().then(function (t) {
+      var j = null; try { j = JSON.parse(t); } catch (e) { /* not json */ }
+      if (res.ok) return j;
+      var err = new Error((j && j.error) || 'เกิดข้อผิดพลาด (' + res.status + ')');
+      err.status = res.status;
+      if (res.status === 401 && S.me && url !== '/api/login') { S.me = null; render(); }
+      throw err;
+    });
+  }, function () {
+    var err = new Error('เชื่อมต่ออินเทอร์เน็ตไม่ได้'); err.network = true; throw err;
+  });
+}
+function openSheet(build) {
+  var scrim = h('div', { class: 'scrim' });
+  var sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' });
+  function close() { scrim.remove(); }
+  scrim.addEventListener('click', function (e) { if (e.target === scrim) close(); });
+  scrim.appendChild(sheet);
+  document.body.appendChild(scrim);
+  build(sheet, close);
+  return close;
+}
+function field(label, input) { return h('label', { class: 'f' }, h('span', { text: label }), input); }
+function todayStr() { return S.today || new Date().toISOString().slice(0, 10); }
+function fmtTime(iso) { return new Date(iso).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' }); }
+var PAY = { cash: 'เงินสด', transfer: 'โอน/พร้อมเพย์', other: 'อื่นๆ' };
+
+/* ---------- สถานะ ---------- */
+var S = { me: null, opt: null, today: null, menu: [], cart: [], cat: 'ทั้งหมด', tab: null, checkoutId: null, cartOpen: false, flash: null };
+
+/* ---------- เริ่มต้น ---------- */
+function boot() {
+  api('GET', '/api/me').then(function (r) { applyMe(r); render(); }, function () { S.me = null; render(); });
+}
+function applyMe(r) {
+  S.me = r.user; S.branch = r.branch; S.opt = r.opt; S.today = r.today; S.shop = r.shop;
+  if (!S.tab) S.tab = r.user.role === 'hq' ? 'overview' : 'sell';
+}
+function render() {
+  clear($app);
+  if (!S.me) return $app.appendChild(loginView());
+  $app.appendChild(S.me.role === 'hq' ? hqShell() : branchShell());
+}
+
+/* ---------- ล็อกอิน ---------- */
+function loginView() {
+  var email = h('input', { type: 'text', autocomplete: 'username', required: true, autocapitalize: 'none', autocorrect: 'off' });
+  var pw = h('input', { type: 'password', autocomplete: 'current-password', required: true });
+  var msg = h('div');
+  var btn = h('button', { class: 'btn pri', type: 'submit', style: 'width:100%', text: 'เข้าสู่ระบบ' });
+  var form = h('form', { onsubmit: function (e) {
+    e.preventDefault(); btn.disabled = true; clear(msg);
+    api('POST', '/api/login', { email: email.value, password: pw.value }).then(function (r) {
+      S.tab = null; S.cart = []; applyMe(r); render();
+    }, function (er) { btn.disabled = false; msg.appendChild(h('div', { class: 'err', text: er.message })); });
+  } }, field('อีเมลหรือชื่อผู้ใช้', email), field('รหัสผ่าน', pw), msg, btn);
+  return h('div', { class: 'login' }, h('div', { class: 'card' },
+    h('h1', { text: SHOP }), h('p', { class: 'mute', style: 'margin:0 0 16px', text: 'ระบบขายหน้าร้าน — เข้าสู่ระบบด้วยบัญชีที่เจ้าของสาขาหรือสำนักงานใหญ่ให้ไว้' }), form));
+}
+
+/* ---------- โครงหน้า ---------- */
+function shell(title, sub, tabs, body) {
+  var hdr = h('header', { class: 'top' }, h('div', { class: 'wrap' },
+    h('h1', null, title, sub ? h('span', { class: 'sub', text: '  ' + sub }) : null),
+    h('button', { class: 'hbtn', onclick: accountSheet, text: 'บัญชี' })));
+  var nav = h('nav', { class: 'tabs', role: 'tablist' }, h('div', { class: 'wrap' }, tabs.map(function (t) {
+    return h('button', { role: 'tab', 'aria-selected': String(S.tab === t[0]), onclick: function () { S.tab = t[0]; S.cartOpen = false; render(); window.scrollTo(0, 0); }, text: t[1] });
+  })));
+  return h('div', null, hdr, nav, h('main', null, h('div', { class: 'wrap' }, body)));
+}
+function accountSheet() {
+  openSheet(function (sh, close) {
+    var o = h('input', { type: 'password', autocomplete: 'current-password' });
+    var n = h('input', { type: 'password', autocomplete: 'new-password' });
+    var msg = h('div');
+    sh.appendChild(h('h2', { text: 'บัญชีของฉัน' }));
+    sh.appendChild(h('p', { class: 'mute', style: 'margin-top:-6px' }, S.me.name + ' · ' + S.me.email));
+    sh.appendChild(field('รหัสผ่านเดิม', o)); sh.appendChild(field('รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)', n)); sh.appendChild(msg);
+    sh.appendChild(h('div', { class: 'row' },
+      h('button', { class: 'btn pri', text: 'เปลี่ยนรหัสผ่าน', onclick: function () {
+        clear(msg);
+        api('POST', '/api/password', { old: o.value, new: n.value }).then(function () { o.value = ''; n.value = ''; msg.appendChild(h('div', { class: 'ok', text: 'เปลี่ยนรหัสผ่านแล้ว' })); },
+          function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+      } }),
+      h('span', { class: 'grow' }),
+      h('button', { class: 'btn bad', text: 'ออกจากระบบ', onclick: function () {
+        api('POST', '/api/logout', {}).then(function () { S.me = null; S.tab = null; S.cart = []; close(); render(); }, function () { S.me = null; close(); render(); });
+      } }),
+      h('button', { class: 'btn', text: 'ปิด', onclick: close })));
+  });
+}
+
+/* =========================================================
+   สาขา (เจ้าของแฟรนไชส์)
+   ========================================================= */
+function branchShell() {
+  var b = S.branch;
+  var body = h('div');
+  if (b && b.status !== 'active') body.appendChild(h('div', { class: 'warnbox', text: 'สาขานี้ถูกระงับการขายชั่วคราว ติดต่อสำนักงานใหญ่' }));
+  var holder = h('div'); body.appendChild(holder);
+  var staff = S.me.role === 'staff';
+  var tabs = staff ? [['sell', 'ขาย'], ['orders', 'ออเดอร์วันนี้'], ['stock', 'นับสต๊อก/ของเสีย']]
+    : [['sell', 'ขาย'], ['orders', 'ออเดอร์'], ['report', 'สรุปยอด'], ['stock', 'สต๊อก'], ['staff', 'พนักงาน'], ['audit', 'ตรวจสอบ'], ['soldout', 'เมนูหมด']];
+  if (!tabs.some(function (t) { return t[0] === S.tab; })) S.tab = 'sell';
+  var el = shell(b ? b.name : SHOP, (b && b.area ? b.area + ' · ' : '') + (staff ? S.me.name : 'เจ้าของ'), tabs, body);
+  if (S.tab === 'sell') sellView(holder);
+  else if (S.tab === 'orders') ordersView(holder);
+  else if (S.tab === 'report') reportView(holder, null);
+  else if (S.tab === 'stock') stockView(holder, null);
+  else if (S.tab === 'staff') staffView(holder);
+  else if (S.tab === 'audit') auditView(holder, null);
+  else soldOutView(holder);
+  return el;
+}
+
+function loadMenu(cb) {
+  api('GET', '/api/menu').then(function (r) { S.menu = r.menu; cb(); }, function (er) { toast(er.message); cb(); });
+}
+
+function sellView(root) {
+  function draw() {
+    clear(root);
+    var cats = ['ทั้งหมด'];
+    S.menu.forEach(function (m) { if (cats.indexOf(m.cat) < 0) cats.push(m.cat); });
+    var list = S.menu.filter(function (m) { return S.cat === 'ทั้งหมด' || m.cat === S.cat; });
+    var tiles = h('div', { class: 'tiles' }, list.map(function (m) {
+      return h('button', { class: 'tile' + (m.sold_out ? ' out' : ''), disabled: m.sold_out, onclick: function () { pick(m); } },
+        m.sold_out ? h('span', { class: 'tag', text: 'หมด' }) : null,
+        h('span', { class: 'b', text: m.name }), h('span', { class: 'p num', text: baht(m.price) }));
+    }));
+    var left = h('div', null,
+      h('div', { class: 'chips' }, cats.map(function (c) { return h('button', { class: 'chip', 'aria-pressed': String(S.cat === c), onclick: function () { S.cat = c; draw(); }, text: c }); })),
+      S.menu.length ? tiles : h('p', { class: 'mute', text: 'ยังไม่มีเมนู' }));
+    var count = S.cart.reduce(function (a, l) { return a + l.qty; }, 0);
+    var sum = cartTotal();
+    root.appendChild(h('div', { class: 'sell' }, left, cartPanel(draw)));
+    root.appendChild(h('button', { class: 'cartbar', onclick: function () { S.cartOpen = true; draw(); } },
+      h('span', { text: 'ตะกร้า ' + count + ' แก้ว' }), h('span', { class: 'num', text: baht(sum) + '  ›' })));
+    if (S.cartOpen) root.querySelector('.cart').classList.add('open');
+  }
+  if (S.menu.length) draw(); else loadMenu(draw);
+}
+function cartTotal() { return S.cart.reduce(function (a, l) { return a + l.unit * l.qty; }, 0); }
+
+function pick(m) {
+  var st = { temp: 1, sweet: 2, tops: [], qty: 1, note: '' };
+  if (!m.opts) { addLine(m, { temp: 0, sweet: 0, tops: [], qty: 1, note: '' }, ''); return; }
+  openSheet(function (sh, close) {
+    var o = S.opt;
+    var box = h('div');
+    function draw() {
+      clear(box);
+      var unit = m.price + o.temp[st.temp][1] + st.tops.reduce(function (a, i) { return a + o.tops[i][1]; }, 0);
+      box.appendChild(h('h2', { text: m.name }));
+      box.appendChild(h('p', { class: 'mute small', style: 'margin:0 0 6px', text: 'แบบ' }));
+      box.appendChild(h('div', { class: 'seg', style: 'margin-bottom:12px' }, o.temp.map(function (t, i) {
+        return h('button', { 'aria-pressed': String(st.temp === i), onclick: function () { st.temp = i; draw(); }, text: t[0] + (t[1] ? ' +' + t[1] : '') });
+      })));
+      box.appendChild(h('p', { class: 'mute small', style: 'margin:0 0 6px', text: 'ความหวาน' }));
+      box.appendChild(h('div', { class: 'seg', style: 'margin-bottom:12px' }, o.sweet.map(function (t, i) {
+        return h('button', { 'aria-pressed': String(st.sweet === i), onclick: function () { st.sweet = i; draw(); }, text: t });
+      })));
+      box.appendChild(h('p', { class: 'mute small', style: 'margin:0 0 6px', text: 'ท็อปปิ้ง' }));
+      box.appendChild(h('div', { class: 'seg', style: 'margin-bottom:12px' }, o.tops.map(function (t, i) {
+        return h('button', { 'aria-pressed': String(st.tops.indexOf(i) >= 0), onclick: function () {
+          var k = st.tops.indexOf(i); if (k >= 0) st.tops.splice(k, 1); else st.tops.push(i); draw();
+        }, text: t[0] + ' +' + t[1] });
+      })));
+      var note = h('input', { type: 'text', maxlength: '80', value: st.note, placeholder: 'เช่น แยกน้ำแข็ง', oninput: function (e) { st.note = e.target.value; } });
+      box.appendChild(field('หมายเหตุ', note));
+      box.appendChild(h('div', { class: 'row' },
+        h('div', { class: 'qty' },
+          h('button', { onclick: function () { st.qty = Math.max(1, st.qty - 1); draw(); }, text: '−' }),
+          h('b', { class: 'num', text: st.qty }),
+          h('button', { onclick: function () { st.qty = Math.min(99, st.qty + 1); draw(); }, text: '+' })),
+        h('span', { class: 'grow' }),
+        h('button', { class: 'btn', text: 'ยกเลิก', onclick: close }),
+        h('button', { class: 'btn pri', text: 'เพิ่ม ' + baht(unit * st.qty), onclick: function () {
+          var opt = [o.temp[st.temp][0], o.sweet[st.sweet]].concat(st.tops.length ? [st.tops.slice().sort().map(function (i) { return o.tops[i][0]; }).join(', ')] : []).join(' · ');
+          addLine(m, { temp: st.temp, sweet: st.sweet, tops: st.tops.slice().sort(), qty: st.qty, note: st.note.trim() }, opt, unit);
+          close();
+        } })));
+    }
+    draw(); sh.appendChild(box);
+  });
+}
+function addLine(m, st, optText, unit) {
+  unit = unit == null ? m.price : unit;
+  var key = [m.id, st.temp, st.sweet, st.tops.join(','), st.note].join('|');
+  var ex = S.cart.filter(function (l) { return l.key === key; })[0];
+  if (ex) ex.qty = Math.min(99, ex.qty + st.qty);
+  else S.cart.push({ key: key, item_id: m.id, name: m.name, opt: optText, unit: unit, qty: st.qty, temp: st.temp, sweet: st.sweet, tops: st.tops, note: st.note });
+  S.checkoutId = null;
+  render();
+}
+
+function cartPanel(redraw) {
+  var disc = h('input', { type: 'number', min: '0', inputmode: 'numeric', value: S.discount || '', placeholder: '0', oninput: function (e) { S.discount = Math.max(0, parseInt(e.target.value, 10) || 0); S.checkoutId = null; refresh(); } });
+  var recv = h('input', { type: 'number', min: '0', inputmode: 'numeric', value: S.received || '', placeholder: 'รับเงินมา', oninput: function (e) { S.received = Math.max(0, parseInt(e.target.value, 10) || 0); refresh(); } });
+  var pay = S.pay || 'cash';
+  var sumEl = h('div', { class: 'total num' }), changeEl = h('div', { class: 'mute small' }), btn;
+  var errBox = h('div');
+  function net() { return Math.max(0, cartTotal() - Math.min(S.discount || 0, cartTotal())); }
+  function refresh() {
+    sumEl.textContent = baht(net());
+    var ch = (S.received || 0) - net();
+    changeEl.textContent = pay === 'cash' && S.received ? (ch >= 0 ? 'เงินทอน ' + baht(ch) : 'รับเงินไม่พอ ขาด ' + baht(-ch)) : '';
+    if (btn) btn.disabled = !S.cart.length || (pay === 'cash' && S.received && S.received < net());
+  }
+  var lines = S.cart.length ? S.cart.map(function (l, i) {
+    return h('div', { class: 'cl' },
+      h('div', { class: 'grow' }, h('div', { class: 'b', text: l.name }),
+        h('div', { class: 'mute small', text: [l.opt, l.note].filter(Boolean).join(' · ') }),
+        h('div', { class: 'small num', text: baht(l.unit) + ' × ' + l.qty })),
+      h('div', { class: 'qty' },
+        h('button', { 'aria-label': 'ลด', onclick: function () { l.qty--; if (l.qty < 1) S.cart.splice(i, 1); S.checkoutId = null; render(); }, text: '−' }),
+        h('span', { class: 'num', text: l.qty }),
+        h('button', { 'aria-label': 'เพิ่ม', onclick: function () { l.qty = Math.min(99, l.qty + 1); S.checkoutId = null; render(); }, text: '+' })),
+      h('div', { class: 'num b', style: 'min-width:60px;text-align:right', text: baht(l.unit * l.qty) }));
+  }) : h('p', { class: 'mute', text: 'แตะเมนูเพื่อเพิ่มรายการ' });
+  btn = h('button', { class: 'btn pri', style: 'width:100%;margin-top:10px', text: 'ชำระเงิน', onclick: function () { checkout(btn, errBox); } });
+  var el = h('div', { class: 'cart card' },
+    h('div', { class: 'row' }, h('h3', { style: 'margin:0', class: 'grow', text: 'ออเดอร์ใหม่' }),
+      S.cart.length ? h('button', { class: 'btn sm', text: 'ล้าง', onclick: function () { S.cart = []; S.discount = 0; S.received = 0; S.checkoutId = null; render(); } }) : null,
+      h('button', { class: 'btn sm cartbar-close', text: 'ปิด', onclick: function () { S.cartOpen = false; render(); } })),
+    lines,
+    h('div', { class: 'row', style: 'margin-top:10px' }, h('span', { class: 'grow mute', text: 'ส่วนลด (บาท)' }), h('div', { style: 'width:110px' }, disc)),
+    h('div', { class: 'seg', style: 'margin:10px 0' }, ['cash', 'transfer', 'other'].map(function (p) {
+      return h('button', { 'aria-pressed': String(pay === p), onclick: function () { S.pay = p; render(); }, text: PAY[p] });
+    })),
+    pay === 'cash' ? h('div', { style: 'margin-bottom:8px' }, recv) : null,
+    h('div', { class: 'row' }, h('span', { class: 'grow', text: 'ยอดสุทธิ' }), sumEl), changeEl, errBox, btn);
+  refresh();
+  return el;
+}
+
+function checkout(btn, errBox) {
+  clear(errBox);
+  if (!S.cart.length) return;
+  if (!S.checkoutId) S.checkoutId = uid();
+  var pay = S.pay || 'cash';
+  var body = {
+    client_id: S.checkoutId, pay: pay, discount: S.discount || 0,
+    received: pay === 'cash' && S.received ? S.received : undefined,
+    lines: S.cart.map(function (l) { return { item_id: l.item_id, temp: l.temp, sweet: l.sweet, tops: l.tops, qty: l.qty, note: l.note }; })
+  };
+  btn.disabled = true;
+  api('POST', '/api/orders', body).then(function (r) {
+    S.cart = []; S.discount = 0; S.received = 0; S.checkoutId = null; S.cartOpen = false; S.menu = [];
+    render(); receiptSheet(r.order);
+  }, function (er) {
+    btn.disabled = false;
+    if (er.status === 409) { S.menu = []; loadMenu(function () {}); }   // เมนูหมด/ราคาเปลี่ยน ให้โหลดใหม่
+    errBox.appendChild(h('div', { class: 'err', text: er.network ? er.message + ' — กดชำระเงินอีกครั้งได้ ระบบจะไม่สร้างออเดอร์ซ้ำ' : er.message }));
+  });
+}
+
+function receiptText(o) {
+  var t = [SHOP + (o.branch_name ? ' · ' + o.branch_name : ''), 'ออเดอร์ #' + o.no + '  ' + o.date + ' ' + fmtTime(o.created_at), '------------------------'];
+  o.lines.forEach(function (l) {
+    t.push(l.name + ' × ' + l.qty + '  ' + baht(l.unit * l.qty));
+    var sub = [l.opt, l.note].filter(Boolean).join(' · '); if (sub) t.push('  ' + sub);
+  });
+  t.push('------------------------');
+  if (o.discount) t.push('ส่วนลด -' + baht(o.discount));
+  t.push('รวม ' + baht(o.total) + '  (' + PAY[o.pay] + ')');
+  if (o.received != null) t.push('รับ ' + baht(o.received) + '  ทอน ' + baht(o.received - o.total));
+  return t.join('\n');
+}
+function receiptSheet(o) {
+  openSheet(function (sh, close) {
+    sh.appendChild(h('h2', { text: 'บันทึกออเดอร์ #' + o.no + ' แล้ว' }));
+    sh.appendChild(h('div', { class: 'receipt', text: receiptText(o) }));
+    sh.appendChild(h('div', { class: 'row', style: 'margin-top:12px' },
+      h('button', { class: 'btn', text: 'คัดลอกใบเสร็จ', onclick: function () {
+        try { navigator.clipboard.writeText(receiptText(o)).then(function () { toast('คัดลอกแล้ว'); }, function () { toast('คัดลอกไม่ได้'); }); } catch (e) { toast('คัดลอกไม่ได้'); }
+      } }), h('span', { class: 'grow' }), h('button', { class: 'btn pri', text: 'ออเดอร์ถัดไป', onclick: close })));
+  });
+}
+
+/* ----- ออเดอร์ ----- */
+function ordersView(root) {
+  var date = S.ordDate || todayStr();
+  var box = h('div', { class: 'stack' });
+  var isStaff = S.me.role === 'staff';
+  var dIn = h('input', { type: 'date', value: date, onchange: function (e) { S.ordDate = e.target.value; render(); } });
+  if (!isStaff) root.appendChild(h('div', { class: 'row', style: 'margin-bottom:12px' }, h('div', { style: 'width:190px' }, dIn)));
+  root.appendChild(box);
+  box.appendChild(h('p', { class: 'mute', text: 'กำลังโหลด…' }));
+  api('GET', '/api/orders?date=' + encodeURIComponent(date)).then(function (r) {
+    clear(box);
+    if (!r.orders.length) return box.appendChild(h('p', { class: 'mute', text: 'ไม่มีออเดอร์ในวันนี้' }));
+    r.orders.forEach(function (o) {
+      box.appendChild(h('div', { class: 'card' },
+        h('div', { class: 'row' },
+          h('b', { text: '#' + o.no }), h('span', { class: 'mute small', text: fmtTime(o.created_at) + ' · ' + PAY[o.pay] }),
+          o.void ? h('span', { class: 'pill void', text: 'ยกเลิก' }) : null,
+          h('span', { class: 'grow' }), h('b', { class: 'num', style: o.void ? 'text-decoration:line-through' : '', text: baht(o.total) })),
+        h('div', { class: 'small mute', text: 'พนักงาน: ' + (o.staff_name || '-') + (o.discount ? ' · ส่วนลด ' + baht(o.discount) : '') + (o.void && o.void_reason ? ' · ยกเลิกเพราะ: ' + o.void_reason : '') }),
+        h('div', { class: 'small mute', style: 'margin:6px 0', text: o.lines.map(function (l) { return l.name + (l.opt ? ' (' + l.opt + ')' : '') + ' ×' + l.qty; }).join(', ') }),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn sm', text: 'ใบเสร็จ', onclick: function () { receiptSheet(o); } }),
+          isStaff ? null : h('button', { class: 'btn sm ' + (o.void ? '' : 'bad'), text: o.void ? 'กู้คืนออเดอร์' : 'ยกเลิกออเดอร์', onclick: function () {
+            if (o.void) api('PATCH', '/api/orders/' + o.id, { void: false }).then(render, function (er) { toast(er.message); });
+            else voidSheet(o);
+          } }))));
+    });
+  }, function (er) { clear(box); box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+
+/* ----- สรุปยอด (ใช้ร่วมกันทั้งสาขาและสำนักงานใหญ่) ----- */
+function monthStart() { return todayStr().slice(0, 8) + '01'; }
+function reportView(root, hq) {
+  var from = S.rFrom || todayStr(), to = S.rTo || todayStr();
+  var branchId = hq ? (S.rBranch || '') : '';
+  var box = h('div', { class: 'stack' });
+  function q() { return '?from=' + from + '&to=' + to + (branchId ? '&branch_id=' + branchId : ''); }
+  function setRange(a, b) { S.rFrom = a; S.rTo = b; render(); }
+  var d1 = h('input', { type: 'date', value: from, onchange: function (e) { S.rFrom = e.target.value; render(); } });
+  var d2 = h('input', { type: 'date', value: to, onchange: function (e) { S.rTo = e.target.value; render(); } });
+  var t = todayStr();
+  var ago = function (n) { var d = new Date(t + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10); };
+  var ctl = h('div', { class: 'card stack', style: 'margin-bottom:12px' },
+    h('div', { class: 'seg' },
+      h('button', { text: 'วันนี้', onclick: function () { setRange(t, t); } }),
+      h('button', { text: '7 วัน', onclick: function () { setRange(ago(6), t); } }),
+      h('button', { text: 'เดือนนี้', onclick: function () { setRange(monthStart(), t); } })),
+    h('div', { class: 'grid2' }, field('ตั้งแต่', d1), field('ถึง', d2)));
+  if (hq) {
+    var sel = h('select', { onchange: function (e) { S.rBranch = e.target.value; render(); } }, h('option', { value: '', text: 'ทุกสาขา' }));
+    (S.branchList || []).forEach(function (b) { sel.appendChild(h('option', { value: String(b.id), text: b.name, selected: String(b.id) === String(branchId) })); });
+    ctl.appendChild(field('สาขา', sel));
+  }
+  ctl.appendChild(h('a', { class: 'btn', style: 'text-align:center;text-decoration:none;display:block', href: '/api/export.csv' + q(), download: '', text: 'ดาวน์โหลดไฟล์ CSV (เปิดใน Excel)' }));
+  root.appendChild(ctl); root.appendChild(box);
+  box.appendChild(h('p', { class: 'mute', text: 'กำลังโหลด…' }));
+  api('GET', '/api/report' + q()).then(function (r) {
+    clear(box);
+    box.appendChild(h('div', { class: 'grid2' },
+      stat('ยอดขาย', baht(r.total)), stat('จำนวนออเดอร์', r.count), stat('เฉลี่ย/ออเดอร์', baht(r.avg)), stat('ยกเลิก', r.voided)));
+    if (r.by_branch) {
+      var max = Math.max.apply(null, r.by_branch.map(function (b) { return b.total; }).concat([1]));
+      box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'แยกตามสาขา' }),
+        h('div', { class: 'tw' }, h('table', null,
+          h('thead', null, h('tr', null, h('th', { text: 'สาขา' }), h('th', { class: 'r', text: 'ออเดอร์' }), h('th', { class: 'r', text: 'ยอดขาย' }), h('th', { text: '' }))),
+          h('tbody', null, r.by_branch.map(function (b) {
+            return h('tr', null,
+              h('td', null, b.name, b.status === 'paused' ? h('span', { class: 'pill off', style: 'margin-left:6px', text: 'ระงับ' }) : null),
+              h('td', { class: 'r num', text: b.count }), h('td', { class: 'r num b', text: baht(b.total) }),
+              h('td', { style: 'width:30%' }, h('div', { class: 'bar', style: 'width:' + Math.round(b.total / max * 100) + '%' })));
+          }))))));
+    }
+    if (r.by_user && r.by_user.length) box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 4px', text: 'แยกตามพนักงาน' }),
+      h('p', { class: 'mute small', style: 'margin:0 0 8px', text: 'ดูส่วนลดและบิลที่ถูกยกเลิกของแต่ละคน — ตัวเลขผิดปกติคือสัญญาณให้ตรวจสอบ' }),
+      h('div', { class: 'tw' }, h('table', null,
+        h('thead', null, h('tr', null, h('th', { text: 'ชื่อ' }), h('th', { class: 'r', text: 'ออเดอร์' }), h('th', { class: 'r', text: 'ยอดขาย' }), h('th', { class: 'r', text: 'ส่วนลด' }), h('th', { class: 'r', text: 'ยกเลิก' }))),
+        h('tbody', null, r.by_user.map(function (u) {
+          return h('tr', null, h('td', { text: u.name }), h('td', { class: 'r num', text: u.count }), h('td', { class: 'r num b', text: baht(u.total) }),
+            h('td', { class: 'r num', text: baht(u.discount) }), h('td', { class: 'r num', text: u.voided }));
+        }))))));
+    var pays = Object.keys(r.by_pay);
+    if (pays.length) box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'วิธีชำระเงิน' }),
+      pays.map(function (p) { return h('div', { class: 'row' }, h('span', { class: 'grow', text: PAY[p] || p }), h('b', { class: 'num', text: baht(r.by_pay[p]) })); })));
+    if (r.items.length) box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'เมนูขายดี' }),
+      r.items.map(function (it, i) { return h('div', { class: 'row' }, h('span', { class: 'mute', style: 'width:22px', text: i + 1 }), h('span', { class: 'grow', text: it.name }), h('span', { class: 'num', text: it.qty + ' แก้ว' }), h('b', { class: 'num', style: 'min-width:80px;text-align:right', text: baht(it.value) })); })));
+    if (r.by_day.length > 1) box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'รายวัน' }),
+      r.by_day.map(function (d) { return h('div', { class: 'row' }, h('span', { class: 'grow', text: d.date }), h('span', { class: 'mute num', text: d.count + ' ออเดอร์' }), h('b', { class: 'num', style: 'min-width:80px;text-align:right', text: baht(d.total) })); })));
+    if (!r.count) box.appendChild(h('p', { class: 'mute', text: 'ไม่มีการขายในช่วงนี้' }));
+  }, function (er) { clear(box); box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+function stat(label, val) { return h('div', { class: 'stat' }, h('div', { class: 'small mute', text: label }), h('div', { class: 'v num', text: val })); }
+
+/* ----- เมนูหมด/พร้อมขาย (สาขา) ----- */
+function soldOutView(root) {
+  var box = h('div', { class: 'stack' });
+  root.appendChild(h('p', { class: 'mute', style: 'margin-top:0', text: 'กดสลับเมื่อวัตถุดิบหมด เมนูที่หมดจะขายไม่ได้จนกว่าจะเปิดใหม่ (ราคาและเมนูหลักกำหนดโดยสำนักงานใหญ่)' }));
+  root.appendChild(box);
+  loadMenu(function () {
+    var cats = [];
+    S.menu.forEach(function (m) { if (cats.indexOf(m.cat) < 0) cats.push(m.cat); });
+    cats.forEach(function (c) {
+      box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 6px', text: c }),
+        S.menu.filter(function (m) { return m.cat === c; }).map(function (m) {
+          var btn = h('button', { class: 'btn sm ' + (m.sold_out ? 'bad' : ''), text: m.sold_out ? 'หมด — กดเพื่อเปิดขาย' : 'พร้อมขาย — กดเมื่อหมด', onclick: function () {
+            btn.disabled = true;
+            api('PUT', '/api/branches/' + S.branch.id + '/items/' + m.id, { sold_out: !m.sold_out }).then(function () { m.sold_out = !m.sold_out; render(); }, function (er) { btn.disabled = false; toast(er.message); });
+          } });
+          return h('div', { class: 'row', style: 'padding:6px 0' }, h('span', { class: 'grow', text: m.name + '  ' + baht(m.price) }), btn);
+        })));
+    });
+  });
+}
+
+/* =========================================================
+   สำนักงานใหญ่
+   ========================================================= */
+function hqShell() {
+  var holder = h('div');
+  var tabs = [['overview', 'ภาพรวม'], ['branches', 'สาขา'], ['menu', 'เมนูกลาง'], ['recipes', 'วัตถุดิบ/สูตร']];
+  var el = shell(SHOP, 'สำนักงานใหญ่', tabs, holder);
+  function go() {
+    if (S.tab === 'overview') reportView(holder, true);
+    else if (S.tab === 'branches') branchesView(holder);
+    else if (S.tab === 'recipes') recipesAdmin(holder);
+    else menuAdmin(holder);
+  }
+  if (S.branchList) go(); else api('GET', '/api/branches').then(function (r) { S.branchList = r.branches; go(); }, function (er) { holder.appendChild(h('div', { class: 'err', text: er.message })); });
+  return el;
+}
+
+function credSheet(title, email, pw, label) {
+  openSheet(function (sh, close) {
+    sh.appendChild(h('h2', { text: title }));
+    sh.appendChild(h('div', { class: 'warnbox', text: 'รหัสผ่านนี้แสดงครั้งเดียว จดหรือคัดลอกส่งให้เจ้าของสาขาทันที (เขาเปลี่ยนเองได้ในเมนูบัญชี)' }));
+    sh.appendChild(h('p', { class: 'mute small', style: 'margin:0', text: label || 'อีเมล' })); sh.appendChild(h('div', { class: 'cred', text: email }));
+    sh.appendChild(h('p', { class: 'mute small', style: 'margin:10px 0 0', text: 'รหัสผ่านชั่วคราว' })); sh.appendChild(h('div', { class: 'cred', text: pw }));
+    sh.appendChild(h('div', { class: 'row', style: 'margin-top:14px' }, h('button', { class: 'btn', text: 'คัดลอก', onclick: function () {
+      try { navigator.clipboard.writeText((label || 'อีเมล') + ': ' + email + '\nรหัสผ่าน: ' + pw + '\nเข้าระบบที่: ' + location.origin).then(function () { toast('คัดลอกแล้ว'); }, function () { toast('คัดลอกไม่ได้ ให้จดเอง'); }); } catch (e) { toast('คัดลอกไม่ได้ ให้จดเอง'); }
+    } }), h('span', { class: 'grow' }), h('button', { class: 'btn pri', text: 'จดแล้ว', onclick: close })));
+  });
+}
+
+function branchesView(root) {
+  var list = S.branchList || [];
+  root.appendChild(h('div', { class: 'row', style: 'margin-bottom:12px' }, h('h2', { class: 'grow', style: 'margin:0;font-size:18px', text: 'สาขา (' + list.length + ')' }),
+    h('button', { class: 'btn pri', text: '+ เพิ่มสาขา', onclick: function () { branchForm(null); } })));
+  if (!list.length) root.appendChild(h('p', { class: 'mute', text: 'ยังไม่มีสาขา กด “เพิ่มสาขา” เพื่อสร้างสาขาและบัญชีเจ้าของ' }));
+  root.appendChild(h('div', { class: 'stack' }, list.map(function (b) {
+    return h('div', { class: 'card' },
+      h('div', { class: 'row' }, h('b', { class: 'grow', text: b.name }), h('span', { class: 'pill' + (b.status === 'paused' ? ' off' : ''), text: b.status === 'paused' ? 'ระงับ' : 'เปิดขาย' })),
+      h('div', { class: 'small mute', text: [b.area, b.owner_name, b.owner_email].filter(Boolean).join(' · ') }),
+      h('div', { class: 'small', style: 'margin:4px 0 8px', text: 'วันนี้ ' + b.today.count + ' ออเดอร์ · ' + baht(b.today.total) }),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn sm', text: 'แก้ไข', onclick: function () { branchForm(b); } }),
+        h('button', { class: 'btn sm', text: 'ราคา/เมนูสาขานี้', onclick: function () { branchItems(b); } }),
+        h('button', { class: 'btn sm', text: 'รีเซ็ตรหัสผ่าน', onclick: function () {
+          api('POST', '/api/branches/' + b.id + '/reset-password', {}).then(function (r) { credSheet('รหัสผ่านใหม่ของ ' + b.name, r.email, r.temp_password); }, function (er) { toast(er.message); });
+        } })));
+  })));
+}
+function reloadBranches() { S.branchList = null; render(); }
+function branchForm(b) {
+  openSheet(function (sh, close) {
+    var name = h('input', { type: 'text', maxlength: '60', value: b ? b.name : '' });
+    var area = h('input', { type: 'text', maxlength: '100', value: b ? b.area : '' });
+    var oname = h('input', { type: 'text', maxlength: '80' });
+    var oemail = h('input', { type: 'email', autocapitalize: 'none' });
+    var pw = h('input', { type: 'text', placeholder: 'เว้นว่าง = ให้ระบบสุ่มให้', autocomplete: 'off' });
+    var status = h('select', null, h('option', { value: 'active', text: 'เปิดขาย', selected: !b || b.status === 'active' }), h('option', { value: 'paused', text: 'ระงับการขาย', selected: b && b.status === 'paused' }));
+    var msg = h('div');
+    sh.appendChild(h('h2', { text: b ? 'แก้ไขสาขา' : 'เพิ่มสาขาใหม่' }));
+    sh.appendChild(field('ชื่อสาขา', name)); sh.appendChild(field('ทำเล', area));
+    if (b) sh.appendChild(field('สถานะ', status));
+    else { sh.appendChild(field('ชื่อเจ้าของสาขา', oname)); sh.appendChild(field('อีเมลเจ้าของ (ใช้ล็อกอิน)', oemail)); sh.appendChild(field('รหัสผ่านเริ่มต้น', pw)); }
+    sh.appendChild(msg);
+    sh.appendChild(h('div', { class: 'row' }, h('span', { class: 'grow' }), h('button', { class: 'btn', text: 'ยกเลิก', onclick: close }),
+      h('button', { class: 'btn pri', text: 'บันทึก', onclick: function () {
+        clear(msg);
+        var p = b ? api('PUT', '/api/branches/' + b.id, { name: name.value, area: area.value, status: status.value })
+                  : api('POST', '/api/branches', { name: name.value, area: area.value, owner_name: oname.value, owner_email: oemail.value, password: pw.value });
+        p.then(function (r) { close(); reloadBranches(); if (!b && r.temp_password) credSheet('สร้างสาขาแล้ว', r.email, r.temp_password); else toast('บันทึกแล้ว'); },
+          function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+      } })));
+  });
+}
+function branchItems(b) {
+  openSheet(function (sh, close) {
+    sh.appendChild(h('h2', { text: 'เมนู/ราคา — ' + b.name }));
+    sh.appendChild(h('p', { class: 'mute small', style: 'margin-top:-6px', text: 'ใส่ราคาเฉพาะสาขา หรือเว้นว่างเพื่อใช้ราคากลาง' }));
+    var box = h('div'); sh.appendChild(box);
+    sh.appendChild(h('div', { class: 'row', style: 'margin-top:12px' }, h('span', { class: 'grow' }), h('button', { class: 'btn pri', text: 'เสร็จ', onclick: function () { close(); } })));
+    api('GET', '/api/branches/' + b.id + '/items').then(function (r) {
+      r.items.forEach(function (it) {
+        var inp = h('input', { type: 'number', min: '0', inputmode: 'numeric', placeholder: String(it.base_price), value: it.override_price == null ? '' : it.override_price,
+          onchange: function () {
+            var v = inp.value === '' ? null : parseInt(inp.value, 10);
+            api('PUT', '/api/branches/' + b.id + '/items/' + it.id, { price: v }).then(function () { toast('บันทึกราคา ' + it.name); }, function (er) { toast(er.message); });
+          } });
+        box.appendChild(h('div', { class: 'row', style: 'padding:5px 0' },
+          h('span', { class: 'grow', text: it.name }), it.sold_out ? h('span', { class: 'pill off', text: 'หมด' }) : null, h('div', { style: 'width:96px' }, inp)));
+      });
+    }, function (er) { box.appendChild(h('div', { class: 'err', text: er.message })); });
+  });
+}
+
+function menuAdmin(root) {
+  var box = h('div', { class: 'stack' });
+  root.appendChild(h('div', { class: 'row', style: 'margin-bottom:12px' }, h('h2', { class: 'grow', style: 'margin:0;font-size:18px', text: 'เมนูกลาง (ใช้กับทุกสาขา)' }),
+    h('button', { class: 'btn pri', text: '+ เพิ่มเมนู', onclick: function () { menuForm(null); } })));
+  root.appendChild(h('p', { class: 'mute small', style: 'margin-top:-4px', text: 'แก้ที่นี่ครั้งเดียว ทุกสาขาเห็นเมนูและราคาใหม่ทันทีที่เปิดแอปหรือขายออเดอร์ถัดไป' }));
+  root.appendChild(box);
+  api('GET', '/api/menu').then(function (r) {
+    var cats = [];
+    r.menu.forEach(function (m) { if (cats.indexOf(m.cat) < 0) cats.push(m.cat); });
+    cats.forEach(function (c) {
+      box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 6px', text: c }),
+        r.menu.filter(function (m) { return m.cat === c; }).map(function (m) {
+          return h('div', { class: 'row', style: 'padding:6px 0' }, h('span', { class: 'grow', text: m.name + (m.opts ? '' : ' (ไม่มีตัวเลือก)') }), h('b', { class: 'num', text: baht(m.price) }),
+            h('button', { class: 'btn sm', text: 'แก้ไข', onclick: function () { menuForm(m); } }));
+        })));
+    });
+  }, function (er) { box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+function menuForm(m) {
+  openSheet(function (sh, close) {
+    var name = h('input', { type: 'text', maxlength: '60', value: m ? m.name : '' });
+    var cat = h('input', { type: 'text', maxlength: '30', value: m ? m.cat : '', placeholder: 'เช่น ชา, กาแฟ, ขนม' });
+    var price = h('input', { type: 'number', min: '0', inputmode: 'numeric', value: m ? m.price : '' });
+    var opts = h('select', null, h('option', { value: '1', text: 'เครื่องดื่ม (เลือกแบบ/หวาน/ท็อปปิ้ง)', selected: !m || m.opts }), h('option', { value: '0', text: 'ไม่มีตัวเลือก (ขนม ฯลฯ)', selected: m && !m.opts }));
+    var msg = h('div');
+    sh.appendChild(h('h2', { text: m ? 'แก้ไขเมนู' : 'เพิ่มเมนู' }));
+    sh.appendChild(field('ชื่อเมนู', name)); sh.appendChild(field('หมวด', cat)); sh.appendChild(field('ราคากลาง (บาท)', price)); sh.appendChild(field('ประเภท', opts)); sh.appendChild(msg);
+    var row = h('div', { class: 'row' });
+    if (m) row.appendChild(h('button', { class: 'btn bad', text: 'ลบเมนู', onclick: function () {
+      if (!window.__confirmDel) { window.__confirmDel = true; toast('กดอีกครั้งเพื่อยืนยันการลบ'); setTimeout(function () { window.__confirmDel = false; }, 4000); return; }
+      window.__confirmDel = false;
+      api('DELETE', '/api/menu/' + m.id).then(function () { close(); render(); }, function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+    } }));
+    row.appendChild(h('span', { class: 'grow' }));
+    row.appendChild(h('button', { class: 'btn', text: 'ยกเลิก', onclick: close }));
+    row.appendChild(h('button', { class: 'btn pri', text: 'บันทึก', onclick: function () {
+      clear(msg);
+      var body = { name: name.value, cat: cat.value, price: parseInt(price.value, 10), opts: opts.value === '1' };
+      (m ? api('PUT', '/api/menu/' + m.id, body) : api('POST', '/api/menu', body)).then(function () { close(); render(); toast('บันทึกแล้ว'); },
+        function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+    } }));
+    sh.appendChild(row);
+  });
+}
+
+
+/* ----- ยกเลิกบิล (ต้องมีเหตุผล) ----- */
+function voidSheet(o) {
+  openSheet(function (sh, close) {
+    var reason = h('input', { type: 'text', maxlength: '100', placeholder: 'เช่น ลูกค้าเปลี่ยนใจ / กดผิด' });
+    var restock = h('input', { type: 'checkbox', id: 'rs' });
+    var msg = h('div');
+    sh.appendChild(h('h2', { text: 'ยกเลิกออเดอร์ #' + o.no + ' (' + baht(o.total) + ')' }));
+    sh.appendChild(field('เหตุผล (จำเป็น — ถูกบันทึกในประวัติตรวจสอบ)', reason));
+    sh.appendChild(h('label', { class: 'row', style: 'margin-bottom:12px' }, restock, h('span', { class: 'small', text: 'คืนวัตถุดิบเข้าสต๊อก (เลือกเมื่อยังไม่ได้ทำเครื่องดื่ม/ของยังไม่ถูกใช้)' })));
+    sh.appendChild(msg);
+    sh.appendChild(h('div', { class: 'row' }, h('span', { class: 'grow' }), h('button', { class: 'btn', text: 'ไม่ยกเลิก', onclick: close }),
+      h('button', { class: 'btn bad', text: 'ยืนยันยกเลิก', onclick: function () {
+        clear(msg);
+        api('PATCH', '/api/orders/' + o.id, { void: true, reason: reason.value, restock: restock.checked }).then(function () { close(); render(); },
+          function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+      } })));
+  });
+}
+
+/* ----- สต๊อก (สาขา) ----- */
+function fmtQ(n) { return Number(n).toLocaleString('th-TH', { maximumFractionDigits: 2 }); }
+function stockView(root) {
+  var staff = S.me.role === 'staff';
+  var tabs = staff ? [['count', 'นับสต๊อก'], ['waste', 'แจ้งของเสีย']] : [['now', 'คงเหลือ'], ['count', 'นับสต๊อก'], ['waste', 'แจ้งของเสีย'], ['rep', 'ส่วนต่าง/ของเสีย']];
+  if (!tabs.some(function (t) { return t[0] === S.stockTab; })) S.stockTab = tabs[0][0];
+  root.appendChild(h('div', { class: 'seg', style: 'margin-bottom:12px' }, tabs.map(function (t) {
+    return h('button', { 'aria-pressed': String(S.stockTab === t[0]), onclick: function () { S.stockTab = t[0]; render(); }, text: t[1] });
+  })));
+  var box = h('div', { class: 'stack' }); root.appendChild(box);
+  if (S.stockTab === 'rep') return stockReport(box, false);
+  box.appendChild(h('p', { class: 'mute', text: 'กำลังโหลด…' }));
+  api('GET', '/api/stock').then(function (r) {
+    clear(box);
+    var list = r.ingredients;
+    if (!list.length) return box.appendChild(h('p', { class: 'mute', text: 'สำนักงานใหญ่ยังไม่ได้ตั้งวัตถุดิบ' }));
+    if (S.stockTab === 'now') nowStock(box, list);
+    else if (S.stockTab === 'count') countForm(box, list);
+    else wasteForm(box, list);
+  }, function (er) { clear(box); box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+function nowStock(box, list) {
+  var total = list.reduce(function (a, i) { return a + Math.max(0, i.on_hand) * i.cost; }, 0);
+  box.appendChild(h('div', { class: 'stat' }, h('div', { class: 'small mute', text: 'มูลค่าวัตถุดิบคงเหลือ (ตามต้นทุน)' }), h('div', { class: 'v num', text: baht(Math.round(total)) })));
+  box.appendChild(h('div', { class: 'card' }, list.map(function (i) {
+    return h('div', { class: 'row', style: 'padding:7px 0;border-bottom:1px dashed var(--line)' },
+      h('span', { class: 'grow', text: i.name }),
+      h('b', { class: 'num', style: i.on_hand < 0 ? 'color:var(--bad)' : '', text: fmtQ(i.on_hand) + ' ' + i.unit }),
+      h('button', { class: 'btn sm', text: '+ รับเข้า', onclick: function () { receiveSheet(i); } }));
+  })));
+  box.appendChild(h('p', { class: 'mute small', text: 'ยอดคงเหลือ = รับเข้า − ที่ตัดตามสูตรเมื่อขาย − ของเสีย ± ผลการนับ ถ้าติดลบแปลว่าใช้เกินสูตรหรือยังไม่ได้บันทึกรับเข้า' }));
+}
+function receiveSheet(i) {
+  openSheet(function (sh, close) {
+    var q = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal' });
+    var note = h('input', { type: 'text', maxlength: '100', placeholder: 'เช่น ซื้อจากแม็คโคร / ใบเสร็จเลขที่' });
+    var msg = h('div');
+    sh.appendChild(h('h2', { text: 'รับเข้า ' + i.name }));
+    sh.appendChild(field('จำนวน (' + i.unit + ')', q)); sh.appendChild(field('หมายเหตุ', note)); sh.appendChild(msg);
+    sh.appendChild(h('div', { class: 'row' }, h('span', { class: 'grow' }), h('button', { class: 'btn', text: 'ยกเลิก', onclick: close }),
+      h('button', { class: 'btn pri', text: 'บันทึก', onclick: function () {
+        clear(msg);
+        api('POST', '/api/stock/receive', { ingredient_id: i.id, qty: parseFloat(q.value), note: note.value }).then(function () { close(); render(); toast('รับเข้าแล้ว'); },
+          function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+      } })));
+  });
+}
+function countForm(box, list) {
+  var staff = S.me.role === 'staff';
+  box.appendChild(h('div', { class: 'warnbox', text: staff ? 'นับของที่เหลือจริงตามหน้างาน แล้วกรอกทีละรายการ (ปล่อยว่างถ้าไม่ได้นับ) ระบบจะไม่โชว์ยอดที่ควรเหลือ เพื่อให้นับตามจริง' : 'นับของจริงแล้วกรอก ระบบจะเทียบกับยอดตามสูตรและบันทึกส่วนต่างเป็นหลักฐาน' }));
+  var inputs = {};
+  box.appendChild(h('div', { class: 'card' }, list.map(function (i) {
+    var inp = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal', placeholder: i.unit });
+    inputs[i.id] = inp;
+    return h('div', { class: 'row', style: 'padding:6px 0' }, h('span', { class: 'grow', text: i.name }), h('div', { style: 'width:130px' }, inp));
+  })));
+  var msg = h('div'); box.appendChild(msg);
+  var btn = h('button', { class: 'btn pri', style: 'width:100%', text: 'ส่งผลการนับ', onclick: function () {
+    clear(msg);
+    var counts = [];
+    list.forEach(function (i) { var v = inputs[i.id].value; if (v !== '') counts.push({ ingredient_id: i.id, actual: parseFloat(v) }); });
+    if (!counts.length) return msg.appendChild(h('div', { class: 'err', text: 'ยังไม่ได้กรอกจำนวนที่นับ' }));
+    btn.disabled = true;
+    api('POST', '/api/stock/count', { counts: counts }).then(function (r) {
+      btn.disabled = false;
+      if (r.results) countResult(r.results); else { toast('ส่งผลการนับ ' + r.counted + ' รายการแล้ว'); }
+      Object.keys(inputs).forEach(function (k) { inputs[k].value = ''; });
+    }, function (er) { btn.disabled = false; msg.appendChild(h('div', { class: 'err', text: er.message })); });
+  } });
+  box.appendChild(btn);
+}
+function countResult(res) {
+  openSheet(function (sh, close) {
+    sh.appendChild(h('h2', { text: 'ผลการนับสต๊อก' }));
+    sh.appendChild(h('div', { class: 'tw' }, h('table', null,
+      h('thead', null, h('tr', null, h('th', { text: 'รายการ' }), h('th', { class: 'r', text: 'ควรเหลือ' }), h('th', { class: 'r', text: 'นับได้' }), h('th', { class: 'r', text: 'ต่าง' }))),
+      h('tbody', null, res.map(function (x) {
+        return h('tr', null, h('td', { text: x.name }), h('td', { class: 'r num', text: fmtQ(x.expected) }), h('td', { class: 'r num', text: fmtQ(x.actual) }),
+          h('td', { class: 'r num b', style: x.diff < 0 ? 'color:var(--bad)' : '', text: (x.diff > 0 ? '+' : '') + fmtQ(x.diff) }));
+      })))));
+    sh.appendChild(h('p', { class: 'mute small', text: 'ยอดคงเหลือถูกปรับเป็นจำนวนที่นับแล้ว ส่วนต่างถูกบันทึกในรายงาน' }));
+    sh.appendChild(h('div', { class: 'row' }, h('span', { class: 'grow' }), h('button', { class: 'btn pri', text: 'ปิด', onclick: function () { close(); render(); } })));
+  });
+}
+function wasteForm(box, list) {
+  var sel = h('select', null, list.map(function (i) { return h('option', { value: String(i.id), text: i.name + ' (' + i.unit + ')' }); }));
+  var q = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal' });
+  var reason = h('input', { type: 'text', maxlength: '100', placeholder: 'เช่น หกทิ้ง / ชงผิด / หมดอายุ' });
+  var msg = h('div');
+  box.appendChild(h('div', { class: 'card' }, field('วัตถุดิบ', sel), field('จำนวนที่เสีย', q), field('เหตุผล (จำเป็น)', reason), msg,
+    h('button', { class: 'btn pri', style: 'width:100%', text: 'บันทึกของเสีย', onclick: function () {
+      clear(msg);
+      api('POST', '/api/stock/waste', { ingredient_id: parseInt(sel.value, 10), qty: parseFloat(q.value), reason: reason.value }).then(function () {
+        q.value = ''; reason.value = ''; msg.appendChild(h('div', { class: 'ok', text: 'บันทึกแล้ว เจ้าของเห็นรายการนี้ในรายงาน' }));
+      }, function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+    } })));
+}
+
+/* ----- รายงานสต๊อก/ส่วนต่าง (เจ้าของ และสำนักงานใหญ่) ----- */
+function stockReport(root, hq) {
+  var from = S.sFrom || monthStart(), to = S.sTo || todayStr();
+  var bid = hq ? (S.sBranch || '') : '';
+  var q = '?from=' + from + '&to=' + to + (bid ? '&branch_id=' + bid : '');
+  var box = h('div', { class: 'stack' });
+  var d1 = h('input', { type: 'date', value: from, onchange: function (e) { S.sFrom = e.target.value; render(); } });
+  var d2 = h('input', { type: 'date', value: to, onchange: function (e) { S.sTo = e.target.value; render(); } });
+  var ctl = h('div', { class: 'card', style: 'margin-bottom:12px' }, h('div', { class: 'grid2' }, field('ตั้งแต่', d1), field('ถึง', d2)));
+  if (hq) {
+    var sel = h('select', { onchange: function (e) { S.sBranch = e.target.value; render(); } }, h('option', { value: '', text: 'ทุกสาขา (สรุปส่วนต่างแต่ละสาขา)' }));
+    (S.branchList || []).forEach(function (b) { sel.appendChild(h('option', { value: String(b.id), text: b.name, selected: String(b.id) === String(bid) })); });
+    ctl.appendChild(field('สาขา', sel));
+  }
+  root.appendChild(ctl); root.appendChild(box);
+  box.appendChild(h('p', { class: 'mute', text: 'กำลังโหลด…' }));
+  api('GET', '/api/stock/report' + q).then(function (r) {
+    clear(box);
+    box.appendChild(h('div', { class: 'grid2' },
+      stat('ส่วนต่างจากการนับ (บาท)', (r.variance_value > 0 ? '+' : '') + baht(r.variance_value)),
+      stat('ของเสียที่แจ้ง (บาท)', baht(r.waste_value))));
+    box.appendChild(h('p', { class: 'mute small', style: 'margin:0', text: 'ส่วนต่างติดลบ = ของหายไปจากที่ควรเหลือตามสูตร (อาจเกิดจากเสียไม่แจ้ง ชงเกินสูตร ขายนอกระบบ หรือขโมย)' }));
+    if (r.by_branch) {
+      box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'แยกตามสาขา' }), h('div', { class: 'tw' }, h('table', null,
+        h('thead', null, h('tr', null, h('th', { text: 'สาขา' }), h('th', { class: 'r', text: 'ส่วนต่าง (บาท)' }), h('th', { class: 'r', text: 'ของเสีย (บาท)' }))),
+        h('tbody', null, r.by_branch.map(function (b) {
+          return h('tr', null, h('td', { text: b.name }), h('td', { class: 'r num b', style: b.variance_value < 0 ? 'color:var(--bad)' : '', text: baht(b.variance_value) }), h('td', { class: 'r num', text: baht(b.waste_value) }));
+        }))))));
+      return;
+    }
+    box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'วัตถุดิบ' }), h('div', { class: 'tw' }, h('table', null,
+      h('thead', null, h('tr', null, h('th', { text: 'รายการ' }), h('th', { class: 'r', text: 'รับเข้า' }), h('th', { class: 'r', text: 'ใช้ตามสูตร' }), h('th', { class: 'r', text: 'เสีย' }), h('th', { class: 'r', text: 'ส่วนต่าง' }), h('th', { class: 'r', text: 'คงเหลือ' }))),
+      h('tbody', null, r.items.map(function (x) {
+        return h('tr', null, h('td', { text: x.name + ' (' + x.unit + ')' }), h('td', { class: 'r num', text: fmtQ(x.received) }), h('td', { class: 'r num', text: fmtQ(x.used) }), h('td', { class: 'r num', text: fmtQ(x.waste) }),
+          h('td', { class: 'r num b', style: x.variance < 0 ? 'color:var(--bad)' : '', text: (x.variance > 0 ? '+' : '') + fmtQ(x.variance) }), h('td', { class: 'r num', text: fmtQ(x.on_hand) }));
+      }))))));
+    box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'การนับที่ไม่ตรง' }),
+      r.variances.length ? r.variances.map(function (v) {
+        return h('div', { style: 'padding:6px 0;border-bottom:1px dashed var(--line)' }, h('div', { class: 'row' }, h('b', { class: 'grow', text: v.name }),
+          h('b', { class: 'num', style: v.diff < 0 ? 'color:var(--bad)' : '', text: (v.diff > 0 ? '+' : '') + fmtQ(v.diff) + ' ' + v.unit + ' (' + baht(v.value) + ')' })),
+          h('div', { class: 'small mute', text: 'ควรเหลือ ' + fmtQ(v.expected) + ' นับได้ ' + fmtQ(v.actual) + ' · ' + new Date(v.at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + ' · นับโดย ' + (v.by || '-') }));
+      }) : h('p', { class: 'mute', text: 'ไม่มีส่วนต่างในช่วงนี้' })));
+    box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'ของเสียที่แจ้ง' }),
+      r.wastes.length ? r.wastes.map(function (v) {
+        return h('div', { style: 'padding:6px 0;border-bottom:1px dashed var(--line)' }, h('div', { class: 'row' }, h('b', { class: 'grow', text: v.name + ' ' + fmtQ(v.qty) + ' ' + v.unit }), h('span', { class: 'num', text: baht(v.value) })),
+          h('div', { class: 'small mute', text: v.reason + ' · ' + new Date(v.at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + ' · ' + (v.by || '-') }));
+      }) : h('p', { class: 'mute', text: 'ไม่มี' })));
+  }, function (er) { clear(box); box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+
+/* ----- พนักงาน (เจ้าของ) ----- */
+function staffView(root) {
+  var box = h('div', { class: 'stack' });
+  root.appendChild(h('div', { class: 'row', style: 'margin-bottom:12px' }, h('h2', { class: 'grow', style: 'margin:0;font-size:18px', text: 'พนักงานหน้าร้าน' }),
+    h('button', { class: 'btn pri', text: '+ เพิ่มพนักงาน', onclick: staffForm })));
+  root.appendChild(h('p', { class: 'mute small', style: 'margin-top:-4px', text: 'ให้พนักงานแต่ละคนมีบัญชีของตัวเอง เพื่อรู้ว่าใครขาย/ใครนับสต๊อก พนักงานขายได้ ดูออเดอร์วันนี้ นับสต๊อกแบบปิดตา และแจ้งของเสียได้ แต่ยกเลิกบิล ดูรายงาน หรือรับของเข้าไม่ได้ และลดราคาได้จำกัด' }));
+  root.appendChild(box);
+  api('GET', '/api/staff').then(function (r) {
+    if (!r.staff.length) box.appendChild(h('p', { class: 'mute', text: 'ยังไม่มีบัญชีพนักงาน' }));
+    r.staff.forEach(function (x) {
+      box.appendChild(h('div', { class: 'card' },
+        h('div', { class: 'row' }, h('b', { class: 'grow', text: x.name }), h('span', { class: 'pill' + (x.active ? '' : ' off'), text: x.active ? 'ใช้งาน' : 'ปิดบัญชี' })),
+        h('div', { class: 'small mute', style: 'margin:2px 0 8px', text: 'ชื่อผู้ใช้: ' + x.username }),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn sm', text: x.active ? 'ปิดบัญชี' : 'เปิดใช้งาน', onclick: function () {
+            api('PUT', '/api/staff/' + x.id, { active: !x.active }).then(render, function (er) { toast(er.message); });
+          } }),
+          h('button', { class: 'btn sm', text: 'รีเซ็ตรหัสผ่าน', onclick: function () {
+            api('POST', '/api/staff/' + x.id + '/reset-password', {}).then(function (r2) { credSheet('รหัสผ่านใหม่ของ ' + x.name, r2.username, r2.temp_password, 'ชื่อผู้ใช้'); }, function (er) { toast(er.message); });
+          } }))));
+    });
+  }, function (er) { box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+function staffForm() {
+  openSheet(function (sh, close) {
+    var name = h('input', { type: 'text', maxlength: '60' });
+    var user = h('input', { type: 'text', maxlength: '60', autocapitalize: 'none', placeholder: 'ตัวอักษรอังกฤษ/ตัวเลข ไม่มีเว้นวรรค' });
+    var msg = h('div');
+    sh.appendChild(h('h2', { text: 'เพิ่มพนักงาน' }));
+    sh.appendChild(field('ชื่อพนักงาน', name)); sh.appendChild(field('ชื่อผู้ใช้สำหรับล็อกอิน', user)); sh.appendChild(msg);
+    sh.appendChild(h('div', { class: 'row' }, h('span', { class: 'grow' }), h('button', { class: 'btn', text: 'ยกเลิก', onclick: close }),
+      h('button', { class: 'btn pri', text: 'สร้างบัญชี', onclick: function () {
+        clear(msg);
+        api('POST', '/api/staff', { name: name.value, username: user.value }).then(function (r) { close(); render(); credSheet('สร้างบัญชีพนักงานแล้ว', r.username, r.temp_password, 'ชื่อผู้ใช้'); },
+          function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+      } })));
+  });
+}
+
+/* ----- ประวัติตรวจสอบ ----- */
+var ACT = { void: 'ยกเลิกบิล', unvoid: 'กู้คืนบิล', stock_receive: 'รับของเข้า', stock_waste: 'ของเสีย', stock_count: 'นับสต๊อก', price: 'เปลี่ยนราคา', sold_out: 'เมนูหมด/เปิดขาย', staff_add: 'เพิ่มพนักงาน', staff_off: 'ปิดบัญชีพนักงาน', staff_on: 'เปิดบัญชีพนักงาน', staff_reset: 'รีเซ็ตรหัสผ่านพนักงาน' };
+function auditView(root, hq) {
+  var bid = hq ? (S.aBranch || '') : '';
+  var box = h('div', { class: 'stack' });
+  if (hq) {
+    var sel = h('select', { onchange: function (e) { S.aBranch = e.target.value; render(); } }, h('option', { value: '', text: 'ทุกสาขา' }));
+    (S.branchList || []).forEach(function (b) { sel.appendChild(h('option', { value: String(b.id), text: b.name, selected: String(b.id) === String(bid) })); });
+    root.appendChild(h('div', { style: 'margin-bottom:12px' }, field('สาขา', sel)));
+  }
+  root.appendChild(h('p', { class: 'mute small', style: 'margin-top:0', text: 'บันทึกการกระทำที่สำคัญ (ลบหรือแก้ไม่ได้) แสดง 200 รายการล่าสุด' }));
+  root.appendChild(box);
+  api('GET', '/api/audit' + (bid ? '?branch_id=' + bid : '')).then(function (r) {
+    if (!r.log.length) return box.appendChild(h('p', { class: 'mute', text: 'ยังไม่มีรายการ' }));
+    box.appendChild(h('div', { class: 'card' }, r.log.map(function (x) {
+      return h('div', { style: 'padding:7px 0;border-bottom:1px dashed var(--line)' },
+        h('div', { class: 'row' }, h('span', { class: 'pill' + (x.action === 'void' || x.action === 'stock_waste' ? ' void' : ''), text: ACT[x.action] || x.action }),
+          h('span', { class: 'small mute grow', text: new Date(x.created_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + ' · ' + (x.by_name || '-') + (hq && x.branch_name ? ' · ' + x.branch_name : '') })),
+        h('div', { class: 'small', text: x.detail }));
+    })));
+  }, function (er) { box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+
+/* ----- วัตถุดิบและสูตร (สำนักงานใหญ่) ----- */
+function recipesAdmin(root) {
+  var box = h('div', { class: 'stack' });
+  root.appendChild(h('div', { class: 'row', style: 'margin-bottom:12px' }, h('h2', { class: 'grow', style: 'margin:0;font-size:18px', text: 'วัตถุดิบและสูตร' }),
+    h('button', { class: 'btn pri', text: '+ วัตถุดิบ', onclick: function () { ingForm(null); } })));
+  root.appendChild(h('p', { class: 'mute small', style: 'margin-top:-4px', text: 'กำหนดสูตรต่อ 1 แก้ว/ชิ้น เมื่อขายระบบจะตัดวัตถุดิบตามสูตรนี้ในทุกสาขา ต้นทุนต่อหน่วยใช้คำนวณมูลค่าของที่หาย' }));
+  root.appendChild(box);
+  Promise.all([api('GET', '/api/ingredients'), api('GET', '/api/recipes'), api('GET', '/api/menu')]).then(function (rs) {
+    var ings = rs[0].ingredients, rec = rs[1], menu = rs[2].menu, byId = {};
+    ings.forEach(function (i) { byId[i.id] = i; });
+    var text = function (lines) { return (lines || []).length ? lines.map(function (l) { return (byId[l.ingredient_id] || {}).name + ' ' + fmtQ(l.qty); }).join(', ') : 'ยังไม่ตั้งสูตร'; };
+    box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 6px', text: 'วัตถุดิบ' }), ings.map(function (i) {
+      return h('div', { class: 'row', style: 'padding:6px 0' }, h('span', { class: 'grow', text: i.name + ' (' + i.unit + ')' }), h('span', { class: 'num mute', text: baht(i.cost) + '/' + i.unit }),
+        h('button', { class: 'btn sm', text: 'แก้ไข', onclick: function () { ingForm(i); } }));
+    })));
+    box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 6px', text: 'สูตรเมนู' }), menu.map(function (m) {
+      return h('div', { style: 'padding:6px 0;border-bottom:1px dashed var(--line)' }, h('div', { class: 'row' }, h('b', { class: 'grow', text: m.name }),
+        h('button', { class: 'btn sm', text: 'ตั้งสูตร', onclick: function () { recipeSheet(m.name, rec.items[m.id], ings, '/api/recipes/item/' + m.id); } })),
+        h('div', { class: 'small mute', text: text(rec.items[m.id]) }));
+    })));
+    box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 6px', text: 'สูตรท็อปปิ้ง (บวกเพิ่มจากสูตรเมนู)' }), S.opt.tops.map(function (t, idx) {
+      return h('div', { style: 'padding:6px 0;border-bottom:1px dashed var(--line)' }, h('div', { class: 'row' }, h('b', { class: 'grow', text: t[0] }),
+        h('button', { class: 'btn sm', text: 'ตั้งสูตร', onclick: function () { recipeSheet('ท็อปปิ้ง ' + t[0], rec.tops[idx], ings, '/api/recipes/topping/' + idx); } })),
+        h('div', { class: 'small mute', text: text(rec.tops[idx]) }));
+    })));
+  }, function (er) { box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+function ingForm(i) {
+  openSheet(function (sh, close) {
+    var name = h('input', { type: 'text', maxlength: '60', value: i ? i.name : '' });
+    var unit = h('input', { type: 'text', maxlength: '12', value: i ? i.unit : '', placeholder: 'กรัม / มล. / ใบ / ชิ้น' });
+    var cost = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal', value: i ? i.cost : '' });
+    var msg = h('div');
+    sh.appendChild(h('h2', { text: i ? 'แก้ไขวัตถุดิบ' : 'เพิ่มวัตถุดิบ' }));
+    sh.appendChild(field('ชื่อ', name)); sh.appendChild(field('หน่วยนับ', unit)); sh.appendChild(field('ต้นทุนต่อหน่วย (บาท)', cost)); sh.appendChild(msg);
+    var row = h('div', { class: 'row' });
+    if (i) row.appendChild(h('button', { class: 'btn bad', text: 'ลบ', onclick: function () {
+      if (!window.__confirmDel) { window.__confirmDel = true; toast('กดอีกครั้งเพื่อยืนยัน (จะถูกเอาออกจากทุกสูตร)'); setTimeout(function () { window.__confirmDel = false; }, 4000); return; }
+      window.__confirmDel = false;
+      api('DELETE', '/api/ingredients/' + i.id).then(function () { close(); render(); }, function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+    } }));
+    row.appendChild(h('span', { class: 'grow' })); row.appendChild(h('button', { class: 'btn', text: 'ยกเลิก', onclick: close }));
+    row.appendChild(h('button', { class: 'btn pri', text: 'บันทึก', onclick: function () {
+      clear(msg);
+      var b = { name: name.value, unit: unit.value, cost: cost.value === '' ? 0 : parseFloat(cost.value) };
+      (i ? api('PUT', '/api/ingredients/' + i.id, b) : api('POST', '/api/ingredients', b)).then(function () { close(); render(); }, function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+    } }));
+    sh.appendChild(row);
+  });
+}
+function recipeSheet(title, lines, ings, url) {
+  openSheet(function (sh, close) {
+    var cur = (lines || []).map(function (l) { return { ingredient_id: l.ingredient_id, qty: l.qty }; });
+    var box = h('div'), msg = h('div');
+    function draw() {
+      clear(box);
+      cur.forEach(function (l, idx) {
+        var sel = h('select', { onchange: function (e) { l.ingredient_id = parseInt(e.target.value, 10); } }, ings.map(function (i) { return h('option', { value: String(i.id), text: i.name + ' (' + i.unit + ')', selected: i.id === l.ingredient_id }); }));
+        var q = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal', value: l.qty, oninput: function (e) { l.qty = parseFloat(e.target.value); } });
+        box.appendChild(h('div', { class: 'row', style: 'margin-bottom:8px;flex-wrap:nowrap' }, h('div', { class: 'grow' }, sel), h('div', { style: 'width:90px' }, q),
+          h('button', { class: 'btn sm', 'aria-label': 'ลบ', text: '✕', onclick: function () { cur.splice(idx, 1); draw(); } })));
+      });
+      box.appendChild(h('button', { class: 'btn sm', text: '+ เพิ่มวัตถุดิบ', onclick: function () { if (ings.length) { cur.push({ ingredient_id: ings[0].id, qty: 1 }); draw(); } } }));
+    }
+    draw();
+    sh.appendChild(h('h2', { text: 'สูตร: ' + title })); sh.appendChild(box); sh.appendChild(msg);
+    sh.appendChild(h('div', { class: 'row', style: 'margin-top:12px' }, h('span', { class: 'grow' }), h('button', { class: 'btn', text: 'ยกเลิก', onclick: close }),
+      h('button', { class: 'btn pri', text: 'บันทึก', onclick: function () {
+        clear(msg);
+        api('PUT', url, { lines: cur }).then(function () { close(); render(); toast('บันทึกสูตรแล้ว'); }, function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+      } })));
+  });
+}
+
+/* ---------- อัปเดตอัตโนมัติ ---------- */
+function checkVersion() {
+  fetch('/api/version', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
+    if (!j || !j.version || j.version === APP_VERSION) return;
+    if (!S.cart.length) { location.reload(); return; }
+    if (document.getElementById('upd')) return;
+    var b = h('div', { class: 'banner', id: 'upd' }, h('span', { text: 'มีเวอร์ชันใหม่ — ชำระเงินออเดอร์นี้ก่อนแล้วกดอัปเดต' }),
+      h('button', { class: 'btn sm', onclick: function () { location.reload(); }, text: 'อัปเดตเลย' }));
+    document.body.appendChild(b);
+  }).catch(function () { /* offline: ลองใหม่รอบหน้า */ });
+}
+setInterval(checkVersion, 60000);
+document.addEventListener('visibilitychange', function () { if (!document.hidden) checkVersion(); });
+
+boot();
+})();
+</script>
+</body>
+</html>
