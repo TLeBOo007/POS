@@ -184,7 +184,7 @@ test('ยกเลิกออเดอร์ไม่นับในราย�
   const before = (await hq.req('GET', `/api/report?from=${day}&to=${day}`)).json;
   const list = (await a.req('GET', '/api/orders')).json.orders;
   const target = list.find((o) => o.total === 110);
-  assert.equal((await a.req('PATCH', '/api/orders/' + target.id, { void: true })).status, 200);
+  assert.equal((await a.req('PATCH', '/api/orders/' + target.id, { void: true, reason: 'ลูกค้าเปลี่ยนใจ' })).status, 200);
   const after = (await hq.req('GET', `/api/report?from=${day}&to=${day}`)).json;
   assert.equal(after.total, before.total - 110);
   assert.equal(after.voided, before.voided + 1);

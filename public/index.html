@@ -201,7 +201,7 @@ function render() {
 
 /* ---------- ล็อกอิน ---------- */
 function loginView() {
-  var email = h('input', { type: 'email', autocomplete: 'username', required: true, autocapitalize: 'none' });
+  var email = h('input', { type: 'text', autocomplete: 'username', required: true, autocapitalize: 'none', autocorrect: 'off' });
   var pw = h('input', { type: 'password', autocomplete: 'current-password', required: true });
   var msg = h('div');
   var btn = h('button', { class: 'btn pri', type: 'submit', style: 'width:100%', text: 'เข้าสู่ระบบ' });
@@ -210,9 +210,9 @@ function loginView() {
     api('POST', '/api/login', { email: email.value, password: pw.value }).then(function (r) {
       S.tab = null; S.cart = []; applyMe(r); render();
     }, function (er) { btn.disabled = false; msg.appendChild(h('div', { class: 'err', text: er.message })); });
-  } }, field('อีเมล', email), field('รหัสผ่าน', pw), msg, btn);
+  } }, field('อีเมลหรือชื่อผู้ใช้', email), field('รหัสผ่าน', pw), msg, btn);
   return h('div', { class: 'login' }, h('div', { class: 'card' },
-    h('h1', { text: SHOP }), h('p', { class: 'mute', style: 'margin:0 0 16px', text: 'ระบบขายหน้าร้าน — เข้าสู่ระบบด้วยอีเมลที่สำนักงานใหญ่ให้ไว้' }), form));
+    h('h1', { text: SHOP }), h('p', { class: 'mute', style: 'margin:0 0 16px', text: 'ระบบขายหน้าร้าน — เข้าสู่ระบบด้วยบัญชีที่เจ้าของสาขาหรือสำนักงานใหญ่ให้ไว้' }), form));
 }
 
 /* ---------- โครงหน้า ---------- */
@@ -255,12 +255,18 @@ function branchShell() {
   var body = h('div');
   if (b && b.status !== 'active') body.appendChild(h('div', { class: 'warnbox', text: 'สาขานี้ถูกระงับการขายชั่วคราว ติดต่อสำนักงานใหญ่' }));
   var holder = h('div'); body.appendChild(holder);
-  var tabs = [['sell', 'ขาย'], ['orders', 'ออเดอร์'], ['report', 'สรุปยอด'], ['stock', 'เมนูหมด/พร้อมขาย']];
-  var el = shell(b ? b.name : SHOP, b && b.area ? b.area : '', tabs, body);
+  var staff = S.me.role === 'staff';
+  var tabs = staff ? [['sell', 'ขาย'], ['orders', 'ออเดอร์วันนี้'], ['stock', 'นับสต๊อก/ของเสีย']]
+    : [['sell', 'ขาย'], ['orders', 'ออเดอร์'], ['report', 'สรุปยอด'], ['stock', 'สต๊อก'], ['staff', 'พนักงาน'], ['audit', 'ตรวจสอบ'], ['soldout', 'เมนูหมด']];
+  if (!tabs.some(function (t) { return t[0] === S.tab; })) S.tab = 'sell';
+  var el = shell(b ? b.name : SHOP, (b && b.area ? b.area + ' · ' : '') + (staff ? S.me.name : 'เจ้าของ'), tabs, body);
   if (S.tab === 'sell') sellView(holder);
   else if (S.tab === 'orders') ordersView(holder);
   else if (S.tab === 'report') reportView(holder, null);
-  else stockView(holder);
+  else if (S.tab === 'stock') stockView(holder, null);
+  else if (S.tab === 'staff') staffView(holder);
+  else if (S.tab === 'audit') auditView(holder, null);
+  else soldOutView(holder);
   return el;
 }
 
@@ -433,8 +439,9 @@ function receiptSheet(o) {
 function ordersView(root) {
   var date = S.ordDate || todayStr();
   var box = h('div', { class: 'stack' });
+  var isStaff = S.me.role === 'staff';
   var dIn = h('input', { type: 'date', value: date, onchange: function (e) { S.ordDate = e.target.value; render(); } });
-  root.appendChild(h('div', { class: 'row', style: 'margin-bottom:12px' }, h('div', { style: 'width:190px' }, dIn)));
+  if (!isStaff) root.appendChild(h('div', { class: 'row', style: 'margin-bottom:12px' }, h('div', { style: 'width:190px' }, dIn)));
   root.appendChild(box);
   box.appendChild(h('p', { class: 'mute', text: 'กำลังโหลด…' }));
   api('GET', '/api/orders?date=' + encodeURIComponent(date)).then(function (r) {
@@ -446,13 +453,13 @@ function ordersView(root) {
           h('b', { text: '#' + o.no }), h('span', { class: 'mute small', text: fmtTime(o.created_at) + ' · ' + PAY[o.pay] }),
           o.void ? h('span', { class: 'pill void', text: 'ยกเลิก' }) : null,
           h('span', { class: 'grow' }), h('b', { class: 'num', style: o.void ? 'text-decoration:line-through' : '', text: baht(o.total) })),
+        h('div', { class: 'small mute', text: 'พนักงาน: ' + (o.staff_name || '-') + (o.discount ? ' · ส่วนลด ' + baht(o.discount) : '') + (o.void && o.void_reason ? ' · ยกเลิกเพราะ: ' + o.void_reason : '') }),
         h('div', { class: 'small mute', style: 'margin:6px 0', text: o.lines.map(function (l) { return l.name + (l.opt ? ' (' + l.opt + ')' : '') + ' ×' + l.qty; }).join(', ') }),
         h('div', { class: 'row' },
           h('button', { class: 'btn sm', text: 'ใบเสร็จ', onclick: function () { receiptSheet(o); } }),
-          h('button', { class: 'btn sm ' + (o.void ? '' : 'bad'), text: o.void ? 'กู้คืนออเดอร์' : 'ยกเลิกออเดอร์', onclick: function () {
-            if (!o.void && !window.__confirmVoid) { window.__confirmVoid = o.id; toast('กดอีกครั้งเพื่อยืนยันการยกเลิก'); setTimeout(function () { window.__confirmVoid = null; }, 4000); return; }
-            window.__confirmVoid = null;
-            api('PATCH', '/api/orders/' + o.id, { void: !o.void }).then(render, function (er) { toast(er.message); });
+          isStaff ? null : h('button', { class: 'btn sm ' + (o.void ? '' : 'bad'), text: o.void ? 'กู้คืนออเดอร์' : 'ยกเลิกออเดอร์', onclick: function () {
+            if (o.void) api('PATCH', '/api/orders/' + o.id, { void: false }).then(render, function (er) { toast(er.message); });
+            else voidSheet(o);
           } }))));
     });
   }, function (er) { clear(box); box.appendChild(h('div', { class: 'err', text: er.message })); });
@@ -500,6 +507,14 @@ function reportView(root, hq) {
               h('td', { style: 'width:30%' }, h('div', { class: 'bar', style: 'width:' + Math.round(b.total / max * 100) + '%' })));
           }))))));
     }
+    if (r.by_user && r.by_user.length) box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 4px', text: 'แยกตามพนักงาน' }),
+      h('p', { class: 'mute small', style: 'margin:0 0 8px', text: 'ดูส่วนลดและบิลที่ถูกยกเลิกของแต่ละคน — ตัวเลขผิดปกติคือสัญญาณให้ตรวจสอบ' }),
+      h('div', { class: 'tw' }, h('table', null,
+        h('thead', null, h('tr', null, h('th', { text: 'ชื่อ' }), h('th', { class: 'r', text: 'ออเดอร์' }), h('th', { class: 'r', text: 'ยอดขาย' }), h('th', { class: 'r', text: 'ส่วนลด' }), h('th', { class: 'r', text: 'ยกเลิก' }))),
+        h('tbody', null, r.by_user.map(function (u) {
+          return h('tr', null, h('td', { text: u.name }), h('td', { class: 'r num', text: u.count }), h('td', { class: 'r num b', text: baht(u.total) }),
+            h('td', { class: 'r num', text: baht(u.discount) }), h('td', { class: 'r num', text: u.voided }));
+        }))))));
     var pays = Object.keys(r.by_pay);
     if (pays.length) box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'วิธีชำระเงิน' }),
       pays.map(function (p) { return h('div', { class: 'row' }, h('span', { class: 'grow', text: PAY[p] || p }), h('b', { class: 'num', text: baht(r.by_pay[p]) })); })));
@@ -513,7 +528,7 @@ function reportView(root, hq) {
 function stat(label, val) { return h('div', { class: 'stat' }, h('div', { class: 'small mute', text: label }), h('div', { class: 'v num', text: val })); }
 
 /* ----- เมนูหมด/พร้อมขาย (สาขา) ----- */
-function stockView(root) {
+function soldOutView(root) {
   var box = h('div', { class: 'stack' });
   root.appendChild(h('p', { class: 'mute', style: 'margin-top:0', text: 'กดสลับเมื่อวัตถุดิบหมด เมนูที่หมดจะขายไม่ได้จนกว่าจะเปิดใหม่ (ราคาและเมนูหลักกำหนดโดยสำนักงานใหญ่)' }));
   root.appendChild(box);
@@ -538,25 +553,26 @@ function stockView(root) {
    ========================================================= */
 function hqShell() {
   var holder = h('div');
-  var tabs = [['overview', 'ภาพรวม'], ['branches', 'สาขา'], ['menu', 'เมนูกลาง']];
+  var tabs = [['overview', 'ภาพรวม'], ['branches', 'สาขา'], ['menu', 'เมนูกลาง'], ['recipes', 'วัตถุดิบ/สูตร']];
   var el = shell(SHOP, 'สำนักงานใหญ่', tabs, holder);
   function go() {
     if (S.tab === 'overview') reportView(holder, true);
     else if (S.tab === 'branches') branchesView(holder);
+    else if (S.tab === 'recipes') recipesAdmin(holder);
     else menuAdmin(holder);
   }
   if (S.branchList) go(); else api('GET', '/api/branches').then(function (r) { S.branchList = r.branches; go(); }, function (er) { holder.appendChild(h('div', { class: 'err', text: er.message })); });
   return el;
 }
 
-function credSheet(title, email, pw) {
+function credSheet(title, email, pw, label) {
   openSheet(function (sh, close) {
     sh.appendChild(h('h2', { text: title }));
     sh.appendChild(h('div', { class: 'warnbox', text: 'รหัสผ่านนี้แสดงครั้งเดียว จดหรือคัดลอกส่งให้เจ้าของสาขาทันที (เขาเปลี่ยนเองได้ในเมนูบัญชี)' }));
-    sh.appendChild(h('p', { class: 'mute small', style: 'margin:0', text: 'อีเมล' })); sh.appendChild(h('div', { class: 'cred', text: email }));
+    sh.appendChild(h('p', { class: 'mute small', style: 'margin:0', text: label || 'อีเมล' })); sh.appendChild(h('div', { class: 'cred', text: email }));
     sh.appendChild(h('p', { class: 'mute small', style: 'margin:10px 0 0', text: 'รหัสผ่านชั่วคราว' })); sh.appendChild(h('div', { class: 'cred', text: pw }));
     sh.appendChild(h('div', { class: 'row', style: 'margin-top:14px' }, h('button', { class: 'btn', text: 'คัดลอก', onclick: function () {
-      try { navigator.clipboard.writeText('อีเมล: ' + email + '\nรหัสผ่าน: ' + pw + '\nเข้าระบบที่: ' + location.origin).then(function () { toast('คัดลอกแล้ว'); }, function () { toast('คัดลอกไม่ได้ ให้จดเอง'); }); } catch (e) { toast('คัดลอกไม่ได้ ให้จดเอง'); }
+      try { navigator.clipboard.writeText((label || 'อีเมล') + ': ' + email + '\nรหัสผ่าน: ' + pw + '\nเข้าระบบที่: ' + location.origin).then(function () { toast('คัดลอกแล้ว'); }, function () { toast('คัดลอกไม่ได้ ให้จดเอง'); }); } catch (e) { toast('คัดลอกไม่ได้ ให้จดเอง'); }
     } }), h('span', { class: 'grow' }), h('button', { class: 'btn pri', text: 'จดแล้ว', onclick: close })));
   });
 }
@@ -666,6 +682,310 @@ function menuForm(m) {
         function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
     } }));
     sh.appendChild(row);
+  });
+}
+
+
+/* ----- ยกเลิกบิล (ต้องมีเหตุผล) ----- */
+function voidSheet(o) {
+  openSheet(function (sh, close) {
+    var reason = h('input', { type: 'text', maxlength: '100', placeholder: 'เช่น ลูกค้าเปลี่ยนใจ / กดผิด' });
+    var restock = h('input', { type: 'checkbox', id: 'rs' });
+    var msg = h('div');
+    sh.appendChild(h('h2', { text: 'ยกเลิกออเดอร์ #' + o.no + ' (' + baht(o.total) + ')' }));
+    sh.appendChild(field('เหตุผล (จำเป็น — ถูกบันทึกในประวัติตรวจสอบ)', reason));
+    sh.appendChild(h('label', { class: 'row', style: 'margin-bottom:12px' }, restock, h('span', { class: 'small', text: 'คืนวัตถุดิบเข้าสต๊อก (เลือกเมื่อยังไม่ได้ทำเครื่องดื่ม/ของยังไม่ถูกใช้)' })));
+    sh.appendChild(msg);
+    sh.appendChild(h('div', { class: 'row' }, h('span', { class: 'grow' }), h('button', { class: 'btn', text: 'ไม่ยกเลิก', onclick: close }),
+      h('button', { class: 'btn bad', text: 'ยืนยันยกเลิก', onclick: function () {
+        clear(msg);
+        api('PATCH', '/api/orders/' + o.id, { void: true, reason: reason.value, restock: restock.checked }).then(function () { close(); render(); },
+          function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+      } })));
+  });
+}
+
+/* ----- สต๊อก (สาขา) ----- */
+function fmtQ(n) { return Number(n).toLocaleString('th-TH', { maximumFractionDigits: 2 }); }
+function stockView(root) {
+  var staff = S.me.role === 'staff';
+  var tabs = staff ? [['count', 'นับสต๊อก'], ['waste', 'แจ้งของเสีย']] : [['now', 'คงเหลือ'], ['count', 'นับสต๊อก'], ['waste', 'แจ้งของเสีย'], ['rep', 'ส่วนต่าง/ของเสีย']];
+  if (!tabs.some(function (t) { return t[0] === S.stockTab; })) S.stockTab = tabs[0][0];
+  root.appendChild(h('div', { class: 'seg', style: 'margin-bottom:12px' }, tabs.map(function (t) {
+    return h('button', { 'aria-pressed': String(S.stockTab === t[0]), onclick: function () { S.stockTab = t[0]; render(); }, text: t[1] });
+  })));
+  var box = h('div', { class: 'stack' }); root.appendChild(box);
+  if (S.stockTab === 'rep') return stockReport(box, false);
+  box.appendChild(h('p', { class: 'mute', text: 'กำลังโหลด…' }));
+  api('GET', '/api/stock').then(function (r) {
+    clear(box);
+    var list = r.ingredients;
+    if (!list.length) return box.appendChild(h('p', { class: 'mute', text: 'สำนักงานใหญ่ยังไม่ได้ตั้งวัตถุดิบ' }));
+    if (S.stockTab === 'now') nowStock(box, list);
+    else if (S.stockTab === 'count') countForm(box, list);
+    else wasteForm(box, list);
+  }, function (er) { clear(box); box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+function nowStock(box, list) {
+  var total = list.reduce(function (a, i) { return a + Math.max(0, i.on_hand) * i.cost; }, 0);
+  box.appendChild(h('div', { class: 'stat' }, h('div', { class: 'small mute', text: 'มูลค่าวัตถุดิบคงเหลือ (ตามต้นทุน)' }), h('div', { class: 'v num', text: baht(Math.round(total)) })));
+  box.appendChild(h('div', { class: 'card' }, list.map(function (i) {
+    return h('div', { class: 'row', style: 'padding:7px 0;border-bottom:1px dashed var(--line)' },
+      h('span', { class: 'grow', text: i.name }),
+      h('b', { class: 'num', style: i.on_hand < 0 ? 'color:var(--bad)' : '', text: fmtQ(i.on_hand) + ' ' + i.unit }),
+      h('button', { class: 'btn sm', text: '+ รับเข้า', onclick: function () { receiveSheet(i); } }));
+  })));
+  box.appendChild(h('p', { class: 'mute small', text: 'ยอดคงเหลือ = รับเข้า − ที่ตัดตามสูตรเมื่อขาย − ของเสีย ± ผลการนับ ถ้าติดลบแปลว่าใช้เกินสูตรหรือยังไม่ได้บันทึกรับเข้า' }));
+}
+function receiveSheet(i) {
+  openSheet(function (sh, close) {
+    var q = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal' });
+    var note = h('input', { type: 'text', maxlength: '100', placeholder: 'เช่น ซื้อจากแม็คโคร / ใบเสร็จเลขที่' });
+    var msg = h('div');
+    sh.appendChild(h('h2', { text: 'รับเข้า ' + i.name }));
+    sh.appendChild(field('จำนวน (' + i.unit + ')', q)); sh.appendChild(field('หมายเหตุ', note)); sh.appendChild(msg);
+    sh.appendChild(h('div', { class: 'row' }, h('span', { class: 'grow' }), h('button', { class: 'btn', text: 'ยกเลิก', onclick: close }),
+      h('button', { class: 'btn pri', text: 'บันทึก', onclick: function () {
+        clear(msg);
+        api('POST', '/api/stock/receive', { ingredient_id: i.id, qty: parseFloat(q.value), note: note.value }).then(function () { close(); render(); toast('รับเข้าแล้ว'); },
+          function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+      } })));
+  });
+}
+function countForm(box, list) {
+  var staff = S.me.role === 'staff';
+  box.appendChild(h('div', { class: 'warnbox', text: staff ? 'นับของที่เหลือจริงตามหน้างาน แล้วกรอกทีละรายการ (ปล่อยว่างถ้าไม่ได้นับ) ระบบจะไม่โชว์ยอดที่ควรเหลือ เพื่อให้นับตามจริง' : 'นับของจริงแล้วกรอก ระบบจะเทียบกับยอดตามสูตรและบันทึกส่วนต่างเป็นหลักฐาน' }));
+  var inputs = {};
+  box.appendChild(h('div', { class: 'card' }, list.map(function (i) {
+    var inp = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal', placeholder: i.unit });
+    inputs[i.id] = inp;
+    return h('div', { class: 'row', style: 'padding:6px 0' }, h('span', { class: 'grow', text: i.name }), h('div', { style: 'width:130px' }, inp));
+  })));
+  var msg = h('div'); box.appendChild(msg);
+  var btn = h('button', { class: 'btn pri', style: 'width:100%', text: 'ส่งผลการนับ', onclick: function () {
+    clear(msg);
+    var counts = [];
+    list.forEach(function (i) { var v = inputs[i.id].value; if (v !== '') counts.push({ ingredient_id: i.id, actual: parseFloat(v) }); });
+    if (!counts.length) return msg.appendChild(h('div', { class: 'err', text: 'ยังไม่ได้กรอกจำนวนที่นับ' }));
+    btn.disabled = true;
+    api('POST', '/api/stock/count', { counts: counts }).then(function (r) {
+      btn.disabled = false;
+      if (r.results) countResult(r.results); else { toast('ส่งผลการนับ ' + r.counted + ' รายการแล้ว'); }
+      Object.keys(inputs).forEach(function (k) { inputs[k].value = ''; });
+    }, function (er) { btn.disabled = false; msg.appendChild(h('div', { class: 'err', text: er.message })); });
+  } });
+  box.appendChild(btn);
+}
+function countResult(res) {
+  openSheet(function (sh, close) {
+    sh.appendChild(h('h2', { text: 'ผลการนับสต๊อก' }));
+    sh.appendChild(h('div', { class: 'tw' }, h('table', null,
+      h('thead', null, h('tr', null, h('th', { text: 'รายการ' }), h('th', { class: 'r', text: 'ควรเหลือ' }), h('th', { class: 'r', text: 'นับได้' }), h('th', { class: 'r', text: 'ต่าง' }))),
+      h('tbody', null, res.map(function (x) {
+        return h('tr', null, h('td', { text: x.name }), h('td', { class: 'r num', text: fmtQ(x.expected) }), h('td', { class: 'r num', text: fmtQ(x.actual) }),
+          h('td', { class: 'r num b', style: x.diff < 0 ? 'color:var(--bad)' : '', text: (x.diff > 0 ? '+' : '') + fmtQ(x.diff) }));
+      })))));
+    sh.appendChild(h('p', { class: 'mute small', text: 'ยอดคงเหลือถูกปรับเป็นจำนวนที่นับแล้ว ส่วนต่างถูกบันทึกในรายงาน' }));
+    sh.appendChild(h('div', { class: 'row' }, h('span', { class: 'grow' }), h('button', { class: 'btn pri', text: 'ปิด', onclick: function () { close(); render(); } })));
+  });
+}
+function wasteForm(box, list) {
+  var sel = h('select', null, list.map(function (i) { return h('option', { value: String(i.id), text: i.name + ' (' + i.unit + ')' }); }));
+  var q = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal' });
+  var reason = h('input', { type: 'text', maxlength: '100', placeholder: 'เช่น หกทิ้ง / ชงผิด / หมดอายุ' });
+  var msg = h('div');
+  box.appendChild(h('div', { class: 'card' }, field('วัตถุดิบ', sel), field('จำนวนที่เสีย', q), field('เหตุผล (จำเป็น)', reason), msg,
+    h('button', { class: 'btn pri', style: 'width:100%', text: 'บันทึกของเสีย', onclick: function () {
+      clear(msg);
+      api('POST', '/api/stock/waste', { ingredient_id: parseInt(sel.value, 10), qty: parseFloat(q.value), reason: reason.value }).then(function () {
+        q.value = ''; reason.value = ''; msg.appendChild(h('div', { class: 'ok', text: 'บันทึกแล้ว เจ้าของเห็นรายการนี้ในรายงาน' }));
+      }, function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+    } })));
+}
+
+/* ----- รายงานสต๊อก/ส่วนต่าง (เจ้าของ และสำนักงานใหญ่) ----- */
+function stockReport(root, hq) {
+  var from = S.sFrom || monthStart(), to = S.sTo || todayStr();
+  var bid = hq ? (S.sBranch || '') : '';
+  var q = '?from=' + from + '&to=' + to + (bid ? '&branch_id=' + bid : '');
+  var box = h('div', { class: 'stack' });
+  var d1 = h('input', { type: 'date', value: from, onchange: function (e) { S.sFrom = e.target.value; render(); } });
+  var d2 = h('input', { type: 'date', value: to, onchange: function (e) { S.sTo = e.target.value; render(); } });
+  var ctl = h('div', { class: 'card', style: 'margin-bottom:12px' }, h('div', { class: 'grid2' }, field('ตั้งแต่', d1), field('ถึง', d2)));
+  if (hq) {
+    var sel = h('select', { onchange: function (e) { S.sBranch = e.target.value; render(); } }, h('option', { value: '', text: 'ทุกสาขา (สรุปส่วนต่างแต่ละสาขา)' }));
+    (S.branchList || []).forEach(function (b) { sel.appendChild(h('option', { value: String(b.id), text: b.name, selected: String(b.id) === String(bid) })); });
+    ctl.appendChild(field('สาขา', sel));
+  }
+  root.appendChild(ctl); root.appendChild(box);
+  box.appendChild(h('p', { class: 'mute', text: 'กำลังโหลด…' }));
+  api('GET', '/api/stock/report' + q).then(function (r) {
+    clear(box);
+    box.appendChild(h('div', { class: 'grid2' },
+      stat('ส่วนต่างจากการนับ (บาท)', (r.variance_value > 0 ? '+' : '') + baht(r.variance_value)),
+      stat('ของเสียที่แจ้ง (บาท)', baht(r.waste_value))));
+    box.appendChild(h('p', { class: 'mute small', style: 'margin:0', text: 'ส่วนต่างติดลบ = ของหายไปจากที่ควรเหลือตามสูตร (อาจเกิดจากเสียไม่แจ้ง ชงเกินสูตร ขายนอกระบบ หรือขโมย)' }));
+    if (r.by_branch) {
+      box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'แยกตามสาขา' }), h('div', { class: 'tw' }, h('table', null,
+        h('thead', null, h('tr', null, h('th', { text: 'สาขา' }), h('th', { class: 'r', text: 'ส่วนต่าง (บาท)' }), h('th', { class: 'r', text: 'ของเสีย (บาท)' }))),
+        h('tbody', null, r.by_branch.map(function (b) {
+          return h('tr', null, h('td', { text: b.name }), h('td', { class: 'r num b', style: b.variance_value < 0 ? 'color:var(--bad)' : '', text: baht(b.variance_value) }), h('td', { class: 'r num', text: baht(b.waste_value) }));
+        }))))));
+      return;
+    }
+    box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'วัตถุดิบ' }), h('div', { class: 'tw' }, h('table', null,
+      h('thead', null, h('tr', null, h('th', { text: 'รายการ' }), h('th', { class: 'r', text: 'รับเข้า' }), h('th', { class: 'r', text: 'ใช้ตามสูตร' }), h('th', { class: 'r', text: 'เสีย' }), h('th', { class: 'r', text: 'ส่วนต่าง' }), h('th', { class: 'r', text: 'คงเหลือ' }))),
+      h('tbody', null, r.items.map(function (x) {
+        return h('tr', null, h('td', { text: x.name + ' (' + x.unit + ')' }), h('td', { class: 'r num', text: fmtQ(x.received) }), h('td', { class: 'r num', text: fmtQ(x.used) }), h('td', { class: 'r num', text: fmtQ(x.waste) }),
+          h('td', { class: 'r num b', style: x.variance < 0 ? 'color:var(--bad)' : '', text: (x.variance > 0 ? '+' : '') + fmtQ(x.variance) }), h('td', { class: 'r num', text: fmtQ(x.on_hand) }));
+      }))))));
+    box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'การนับที่ไม่ตรง' }),
+      r.variances.length ? r.variances.map(function (v) {
+        return h('div', { style: 'padding:6px 0;border-bottom:1px dashed var(--line)' }, h('div', { class: 'row' }, h('b', { class: 'grow', text: v.name }),
+          h('b', { class: 'num', style: v.diff < 0 ? 'color:var(--bad)' : '', text: (v.diff > 0 ? '+' : '') + fmtQ(v.diff) + ' ' + v.unit + ' (' + baht(v.value) + ')' })),
+          h('div', { class: 'small mute', text: 'ควรเหลือ ' + fmtQ(v.expected) + ' นับได้ ' + fmtQ(v.actual) + ' · ' + new Date(v.at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + ' · นับโดย ' + (v.by || '-') }));
+      }) : h('p', { class: 'mute', text: 'ไม่มีส่วนต่างในช่วงนี้' })));
+    box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 8px', text: 'ของเสียที่แจ้ง' }),
+      r.wastes.length ? r.wastes.map(function (v) {
+        return h('div', { style: 'padding:6px 0;border-bottom:1px dashed var(--line)' }, h('div', { class: 'row' }, h('b', { class: 'grow', text: v.name + ' ' + fmtQ(v.qty) + ' ' + v.unit }), h('span', { class: 'num', text: baht(v.value) })),
+          h('div', { class: 'small mute', text: v.reason + ' · ' + new Date(v.at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + ' · ' + (v.by || '-') }));
+      }) : h('p', { class: 'mute', text: 'ไม่มี' })));
+  }, function (er) { clear(box); box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+
+/* ----- พนักงาน (เจ้าของ) ----- */
+function staffView(root) {
+  var box = h('div', { class: 'stack' });
+  root.appendChild(h('div', { class: 'row', style: 'margin-bottom:12px' }, h('h2', { class: 'grow', style: 'margin:0;font-size:18px', text: 'พนักงานหน้าร้าน' }),
+    h('button', { class: 'btn pri', text: '+ เพิ่มพนักงาน', onclick: staffForm })));
+  root.appendChild(h('p', { class: 'mute small', style: 'margin-top:-4px', text: 'ให้พนักงานแต่ละคนมีบัญชีของตัวเอง เพื่อรู้ว่าใครขาย/ใครนับสต๊อก พนักงานขายได้ ดูออเดอร์วันนี้ นับสต๊อกแบบปิดตา และแจ้งของเสียได้ แต่ยกเลิกบิล ดูรายงาน หรือรับของเข้าไม่ได้ และลดราคาได้จำกัด' }));
+  root.appendChild(box);
+  api('GET', '/api/staff').then(function (r) {
+    if (!r.staff.length) box.appendChild(h('p', { class: 'mute', text: 'ยังไม่มีบัญชีพนักงาน' }));
+    r.staff.forEach(function (x) {
+      box.appendChild(h('div', { class: 'card' },
+        h('div', { class: 'row' }, h('b', { class: 'grow', text: x.name }), h('span', { class: 'pill' + (x.active ? '' : ' off'), text: x.active ? 'ใช้งาน' : 'ปิดบัญชี' })),
+        h('div', { class: 'small mute', style: 'margin:2px 0 8px', text: 'ชื่อผู้ใช้: ' + x.username }),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn sm', text: x.active ? 'ปิดบัญชี' : 'เปิดใช้งาน', onclick: function () {
+            api('PUT', '/api/staff/' + x.id, { active: !x.active }).then(render, function (er) { toast(er.message); });
+          } }),
+          h('button', { class: 'btn sm', text: 'รีเซ็ตรหัสผ่าน', onclick: function () {
+            api('POST', '/api/staff/' + x.id + '/reset-password', {}).then(function (r2) { credSheet('รหัสผ่านใหม่ของ ' + x.name, r2.username, r2.temp_password, 'ชื่อผู้ใช้'); }, function (er) { toast(er.message); });
+          } }))));
+    });
+  }, function (er) { box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+function staffForm() {
+  openSheet(function (sh, close) {
+    var name = h('input', { type: 'text', maxlength: '60' });
+    var user = h('input', { type: 'text', maxlength: '60', autocapitalize: 'none', placeholder: 'ตัวอักษรอังกฤษ/ตัวเลข ไม่มีเว้นวรรค' });
+    var msg = h('div');
+    sh.appendChild(h('h2', { text: 'เพิ่มพนักงาน' }));
+    sh.appendChild(field('ชื่อพนักงาน', name)); sh.appendChild(field('ชื่อผู้ใช้สำหรับล็อกอิน', user)); sh.appendChild(msg);
+    sh.appendChild(h('div', { class: 'row' }, h('span', { class: 'grow' }), h('button', { class: 'btn', text: 'ยกเลิก', onclick: close }),
+      h('button', { class: 'btn pri', text: 'สร้างบัญชี', onclick: function () {
+        clear(msg);
+        api('POST', '/api/staff', { name: name.value, username: user.value }).then(function (r) { close(); render(); credSheet('สร้างบัญชีพนักงานแล้ว', r.username, r.temp_password, 'ชื่อผู้ใช้'); },
+          function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+      } })));
+  });
+}
+
+/* ----- ประวัติตรวจสอบ ----- */
+var ACT = { void: 'ยกเลิกบิล', unvoid: 'กู้คืนบิล', stock_receive: 'รับของเข้า', stock_waste: 'ของเสีย', stock_count: 'นับสต๊อก', price: 'เปลี่ยนราคา', sold_out: 'เมนูหมด/เปิดขาย', staff_add: 'เพิ่มพนักงาน', staff_off: 'ปิดบัญชีพนักงาน', staff_on: 'เปิดบัญชีพนักงาน', staff_reset: 'รีเซ็ตรหัสผ่านพนักงาน' };
+function auditView(root, hq) {
+  var bid = hq ? (S.aBranch || '') : '';
+  var box = h('div', { class: 'stack' });
+  if (hq) {
+    var sel = h('select', { onchange: function (e) { S.aBranch = e.target.value; render(); } }, h('option', { value: '', text: 'ทุกสาขา' }));
+    (S.branchList || []).forEach(function (b) { sel.appendChild(h('option', { value: String(b.id), text: b.name, selected: String(b.id) === String(bid) })); });
+    root.appendChild(h('div', { style: 'margin-bottom:12px' }, field('สาขา', sel)));
+  }
+  root.appendChild(h('p', { class: 'mute small', style: 'margin-top:0', text: 'บันทึกการกระทำที่สำคัญ (ลบหรือแก้ไม่ได้) แสดง 200 รายการล่าสุด' }));
+  root.appendChild(box);
+  api('GET', '/api/audit' + (bid ? '?branch_id=' + bid : '')).then(function (r) {
+    if (!r.log.length) return box.appendChild(h('p', { class: 'mute', text: 'ยังไม่มีรายการ' }));
+    box.appendChild(h('div', { class: 'card' }, r.log.map(function (x) {
+      return h('div', { style: 'padding:7px 0;border-bottom:1px dashed var(--line)' },
+        h('div', { class: 'row' }, h('span', { class: 'pill' + (x.action === 'void' || x.action === 'stock_waste' ? ' void' : ''), text: ACT[x.action] || x.action }),
+          h('span', { class: 'small mute grow', text: new Date(x.created_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + ' · ' + (x.by_name || '-') + (hq && x.branch_name ? ' · ' + x.branch_name : '') })),
+        h('div', { class: 'small', text: x.detail }));
+    })));
+  }, function (er) { box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+
+/* ----- วัตถุดิบและสูตร (สำนักงานใหญ่) ----- */
+function recipesAdmin(root) {
+  var box = h('div', { class: 'stack' });
+  root.appendChild(h('div', { class: 'row', style: 'margin-bottom:12px' }, h('h2', { class: 'grow', style: 'margin:0;font-size:18px', text: 'วัตถุดิบและสูตร' }),
+    h('button', { class: 'btn pri', text: '+ วัตถุดิบ', onclick: function () { ingForm(null); } })));
+  root.appendChild(h('p', { class: 'mute small', style: 'margin-top:-4px', text: 'กำหนดสูตรต่อ 1 แก้ว/ชิ้น เมื่อขายระบบจะตัดวัตถุดิบตามสูตรนี้ในทุกสาขา ต้นทุนต่อหน่วยใช้คำนวณมูลค่าของที่หาย' }));
+  root.appendChild(box);
+  Promise.all([api('GET', '/api/ingredients'), api('GET', '/api/recipes'), api('GET', '/api/menu')]).then(function (rs) {
+    var ings = rs[0].ingredients, rec = rs[1], menu = rs[2].menu, byId = {};
+    ings.forEach(function (i) { byId[i.id] = i; });
+    var text = function (lines) { return (lines || []).length ? lines.map(function (l) { return (byId[l.ingredient_id] || {}).name + ' ' + fmtQ(l.qty); }).join(', ') : 'ยังไม่ตั้งสูตร'; };
+    box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 6px', text: 'วัตถุดิบ' }), ings.map(function (i) {
+      return h('div', { class: 'row', style: 'padding:6px 0' }, h('span', { class: 'grow', text: i.name + ' (' + i.unit + ')' }), h('span', { class: 'num mute', text: baht(i.cost) + '/' + i.unit }),
+        h('button', { class: 'btn sm', text: 'แก้ไข', onclick: function () { ingForm(i); } }));
+    })));
+    box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 6px', text: 'สูตรเมนู' }), menu.map(function (m) {
+      return h('div', { style: 'padding:6px 0;border-bottom:1px dashed var(--line)' }, h('div', { class: 'row' }, h('b', { class: 'grow', text: m.name }),
+        h('button', { class: 'btn sm', text: 'ตั้งสูตร', onclick: function () { recipeSheet(m.name, rec.items[m.id], ings, '/api/recipes/item/' + m.id); } })),
+        h('div', { class: 'small mute', text: text(rec.items[m.id]) }));
+    })));
+    box.appendChild(h('div', { class: 'card' }, h('h3', { style: 'margin:0 0 6px', text: 'สูตรท็อปปิ้ง (บวกเพิ่มจากสูตรเมนู)' }), S.opt.tops.map(function (t, idx) {
+      return h('div', { style: 'padding:6px 0;border-bottom:1px dashed var(--line)' }, h('div', { class: 'row' }, h('b', { class: 'grow', text: t[0] }),
+        h('button', { class: 'btn sm', text: 'ตั้งสูตร', onclick: function () { recipeSheet('ท็อปปิ้ง ' + t[0], rec.tops[idx], ings, '/api/recipes/topping/' + idx); } })),
+        h('div', { class: 'small mute', text: text(rec.tops[idx]) }));
+    })));
+  }, function (er) { box.appendChild(h('div', { class: 'err', text: er.message })); });
+}
+function ingForm(i) {
+  openSheet(function (sh, close) {
+    var name = h('input', { type: 'text', maxlength: '60', value: i ? i.name : '' });
+    var unit = h('input', { type: 'text', maxlength: '12', value: i ? i.unit : '', placeholder: 'กรัม / มล. / ใบ / ชิ้น' });
+    var cost = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal', value: i ? i.cost : '' });
+    var msg = h('div');
+    sh.appendChild(h('h2', { text: i ? 'แก้ไขวัตถุดิบ' : 'เพิ่มวัตถุดิบ' }));
+    sh.appendChild(field('ชื่อ', name)); sh.appendChild(field('หน่วยนับ', unit)); sh.appendChild(field('ต้นทุนต่อหน่วย (บาท)', cost)); sh.appendChild(msg);
+    var row = h('div', { class: 'row' });
+    if (i) row.appendChild(h('button', { class: 'btn bad', text: 'ลบ', onclick: function () {
+      if (!window.__confirmDel) { window.__confirmDel = true; toast('กดอีกครั้งเพื่อยืนยัน (จะถูกเอาออกจากทุกสูตร)'); setTimeout(function () { window.__confirmDel = false; }, 4000); return; }
+      window.__confirmDel = false;
+      api('DELETE', '/api/ingredients/' + i.id).then(function () { close(); render(); }, function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+    } }));
+    row.appendChild(h('span', { class: 'grow' })); row.appendChild(h('button', { class: 'btn', text: 'ยกเลิก', onclick: close }));
+    row.appendChild(h('button', { class: 'btn pri', text: 'บันทึก', onclick: function () {
+      clear(msg);
+      var b = { name: name.value, unit: unit.value, cost: cost.value === '' ? 0 : parseFloat(cost.value) };
+      (i ? api('PUT', '/api/ingredients/' + i.id, b) : api('POST', '/api/ingredients', b)).then(function () { close(); render(); }, function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+    } }));
+    sh.appendChild(row);
+  });
+}
+function recipeSheet(title, lines, ings, url) {
+  openSheet(function (sh, close) {
+    var cur = (lines || []).map(function (l) { return { ingredient_id: l.ingredient_id, qty: l.qty }; });
+    var box = h('div'), msg = h('div');
+    function draw() {
+      clear(box);
+      cur.forEach(function (l, idx) {
+        var sel = h('select', { onchange: function (e) { l.ingredient_id = parseInt(e.target.value, 10); } }, ings.map(function (i) { return h('option', { value: String(i.id), text: i.name + ' (' + i.unit + ')', selected: i.id === l.ingredient_id }); }));
+        var q = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal', value: l.qty, oninput: function (e) { l.qty = parseFloat(e.target.value); } });
+        box.appendChild(h('div', { class: 'row', style: 'margin-bottom:8px;flex-wrap:nowrap' }, h('div', { class: 'grow' }, sel), h('div', { style: 'width:90px' }, q),
+          h('button', { class: 'btn sm', 'aria-label': 'ลบ', text: '✕', onclick: function () { cur.splice(idx, 1); draw(); } })));
+      });
+      box.appendChild(h('button', { class: 'btn sm', text: '+ เพิ่มวัตถุดิบ', onclick: function () { if (ings.length) { cur.push({ ingredient_id: ings[0].id, qty: 1 }); draw(); } } }));
+    }
+    draw();
+    sh.appendChild(h('h2', { text: 'สูตร: ' + title })); sh.appendChild(box); sh.appendChild(msg);
+    sh.appendChild(h('div', { class: 'row', style: 'margin-top:12px' }, h('span', { class: 'grow' }), h('button', { class: 'btn', text: 'ยกเลิก', onclick: close }),
+      h('button', { class: 'btn pri', text: 'บันทึก', onclick: function () {
+        clear(msg);
+        api('PUT', url, { lines: cur }).then(function () { close(); render(); toast('บันทึกสูตรแล้ว'); }, function (er) { msg.appendChild(h('div', { class: 'err', text: er.message })); });
+      } })));
   });
 }
 
