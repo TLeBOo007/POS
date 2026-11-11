@@ -232,6 +232,7 @@ function accountSheet() {
     var msg = h('div');
     sh.appendChild(h('h2', { text: 'บัญชีของฉัน' }));
     sh.appendChild(h('p', { class: 'mute', style: 'margin-top:-6px' }, S.me.name + ' · ' + S.me.email));
+    sh.appendChild(h('p', { class: 'mute small', style: 'margin:-6px 0 10px', text: 'เวอร์ชันระบบ: ' + APP_VERSION + ' · ' + (S.me.role === 'staff' ? 'พนักงาน' : S.me.role === 'hq' ? 'สำนักงานใหญ่' : 'เจ้าของสาขา') }));
     sh.appendChild(field('รหัสผ่านเดิม', o)); sh.appendChild(field('รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)', n)); sh.appendChild(msg);
     sh.appendChild(h('div', { class: 'row' },
       h('button', { class: 'btn pri', text: 'เปลี่ยนรหัสผ่าน', onclick: function () {
