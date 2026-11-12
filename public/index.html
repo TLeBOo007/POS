@@ -34,15 +34,15 @@ button{cursor:pointer}
 :focus-visible{outline:2px solid var(--tea-2);outline-offset:2px}
 .wrap{max-width:1180px;margin:0 auto;padding:0 max(14px,env(safe-area-inset-left)) 0 max(14px,env(safe-area-inset-right))}
 /* โครงหน้า */
-header.top{position:sticky;top:0;z-index:20;color:#fff;padding-top:env(safe-area-inset-top);
-  background:var(--tea);border-bottom:1px solid rgba(255,255,255,.08)}
+header.top{position:sticky;top:0;z-index:20;color:var(--ink);padding-top:env(safe-area-inset-top);
+  background:var(--card);border-bottom:1px solid var(--line)}
 header.top .wrap{display:flex;align-items:center;gap:10px;min-height:54px;flex-wrap:wrap}
-header.top h1{margin:0;font-size:15px;font-weight:600;letter-spacing:-.01em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-header.top .sub{font-weight:400;opacity:.7;font-size:12px}
-.logo{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.12);flex:none}
+header.top h1{margin:0;font-size:15px;font-weight:600;letter-spacing:-.01em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tea)}
+header.top .sub{font-weight:400;color:var(--mute);font-size:12px}
+.logo{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:var(--tea);flex:none}
 .logo svg{width:17px;height:17px}
-.hbtn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:inherit;border-radius:var(--rs);padding:5px 14px;min-height:34px;font-size:13px;font-weight:500;transition:background .15s}
-.hbtn:hover{background:rgba(255,255,255,.2)}
+.hbtn{background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:var(--rs);padding:5px 14px;min-height:34px;font-size:13px;font-weight:500;transition:background .15s,border-color .15s}
+.hbtn:hover{background:var(--card);border-color:var(--line2)}
 nav.tabs{display:flex;gap:4px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:calc(54px + env(safe-area-inset-top));z-index:15;overflow-x:auto;scrollbar-width:none}
 nav.tabs::-webkit-scrollbar{display:none}
 nav.tabs .wrap{display:flex;gap:0;width:100%}
@@ -76,15 +76,15 @@ label.f>span{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
 /* ขาย */
 .sell>*{min-width:0}
 .sell{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.tile{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;min-height:88px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;position:relative;overflow:hidden;transition:transform .12s,box-shadow .15s,border-color .15s}
-.tile:hover{transform:translateY(-2px);border-color:var(--tea);box-shadow:var(--shadow)}
-.tile:active{transform:scale(.97)}
-.tile .b{font-size:14px;line-height:1.3}
-.tile .p{color:var(--tea);font-weight:600;font-size:15px;align-self:flex-start}
-.tile.out{opacity:.5}
-.tile.out::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(0,0,0,.04) 0 6px,transparent 6px 12px)}
-.tile .tag{position:absolute;top:8px;right:8px;background:var(--bad-soft);color:var(--bad);font-size:10px;font-weight:600;border-radius:var(--rs);padding:1px 7px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.tile{text-align:left;color:#fff;border:none;border-radius:var(--r);padding:16px 14px;aspect-ratio:1;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;position:relative;overflow:hidden;transition:transform .12s,box-shadow .15s}
+.tile:hover{transform:translateY(-3px);box-shadow:0 8px 24px -6px rgba(0,0,0,.3)}
+.tile:active{transform:scale(.96)}
+.tile .b{font-size:14px;font-weight:500;line-height:1.3;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tile .p{font-weight:700;font-size:16px;opacity:.9}
+.tile.out{opacity:.45}
+.tile.out::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(0,0,0,.08) 0 6px,transparent 6px 12px)}
+.tile .tag{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.4);color:#fff;font-size:10px;font-weight:600;border-radius:var(--rs);padding:2px 8px}
 .cart{position:sticky;top:118px}
 .cl{display:flex;gap:8px;padding:9px 0;border-bottom:1px dashed var(--line)}
 .qty{display:flex;align-items:center;gap:6px}
@@ -213,7 +213,16 @@ function field(label, input) { return h('label', { class: 'f' }, h('span', { tex
 function todayStr() { return S.today || new Date().toISOString().slice(0, 10); }
 function fmtTime(iso) { return new Date(iso).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' }); }
 var PAY = { cash: 'เงินสด', transfer: 'โอน/พร้อมเพย์', other: 'อื่นๆ' };
-var LOGO = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 16.2l4.6-7.6 3.3 5.3 2.2-3 5.9 7.1" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M3 19h18" stroke="#fff" stroke-width="1.7" stroke-linecap="round" opacity=".5"/><path d="M16.6 5.6c.9-.8.9-1.9 0-2.7" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/><path d="M19.4 6.8c.9-.8.9-1.9 0-2.7" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".55"/></svg>';
+var TILE_COLORS = [
+  ['#1B4332','#2D6A4F'],['#5B3A29','#8B6914'],['#1A5276','#2E86C1'],
+  ['#6C3483','#A569BD'],['#B7410E','#E67E22'],['#1B5E20','#4CAF50'],
+  ['#4A148C','#7B1FA2'],['#004D40','#00897B']
+];
+function tileColor(cat) {
+  var h = 0; for (var i = 0; i < cat.length; i++) h = ((h << 5) - h + cat.charCodeAt(i)) | 0;
+  return TILE_COLORS[((h % TILE_COLORS.length) + TILE_COLORS.length) % TILE_COLORS.length];
+}
+var LOGO = '<svg viewBox="0 0 24 24" fill="none"><path d="M12 3C9.5 3 7.5 4.2 7.5 6c0 1 .5 1.8 1.5 2.3V20h6V8.3c1-.5 1.5-1.3 1.5-2.3 0-1.8-2-3-4.5-3z" fill="#fff" opacity=".9"/><circle cx="12" cy="6" r="1.5" fill="#fff" opacity=".5"/></svg>';
 function logoMark() { var el = h('span', { class: 'logo' }); el.innerHTML = LOGO; return el; }
 
 /* ---------- สถานะ ---------- */
@@ -317,7 +326,8 @@ function sellView(root) {
     S.menu.forEach(function (m) { if (cats.indexOf(m.cat) < 0) cats.push(m.cat); });
     var list = S.menu.filter(function (m) { return S.cat === 'ทั้งหมด' || m.cat === S.cat; });
     var tiles = h('div', { class: 'tiles' }, list.map(function (m) {
-      return h('button', { class: 'tile' + (m.sold_out ? ' out' : ''), disabled: m.sold_out, onclick: function () { pick(m); } },
+      var c = tileColor(m.cat);
+      return h('button', { class: 'tile' + (m.sold_out ? ' out' : ''), disabled: m.sold_out, style: 'background:linear-gradient(135deg,' + c[0] + ',' + c[1] + ')', onclick: function () { pick(m); } },
         m.sold_out ? h('span', { class: 'tag', text: 'หมด' }) : null,
         h('span', { class: 'b', text: m.name }), h('span', { class: 'p num', text: baht(m.price) }));
     }));
