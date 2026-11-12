@@ -785,7 +785,14 @@ function createApp(opts = {}) {
       if (p === '/healthz') return send(res, 200, 'text/plain; charset=utf-8', 'ok');
       if (!p.startsWith('/api/')) {
         if (req.method !== 'GET' && req.method !== 'HEAD') throw new HttpError(405, 'ไม่รองรับ');
-        if (/\.[a-z0-9]+$/i.test(p)) return send(res, 404, 'text/plain; charset=utf-8', 'not found');
+        if (/\.[a-z0-9]+$/i.test(p)) {
+          const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'application/javascript', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.woff2': 'font/woff2' };
+          const safe = path.normalize(p).replace(/\\/g, '/');
+          if (!safe.includes('..')) {
+            try { const data = fs.readFileSync(path.join(__dirname, 'public', safe)); return send(res, 200, MIME[path.extname(safe).toLowerCase()] || 'application/octet-stream', data); } catch (_) { /* fall through */ }
+          }
+          return send(res, 404, 'text/plain; charset=utf-8', 'not found');
+        }
         return send(res, 200, 'text/html; charset=utf-8', req.method === 'HEAD' ? '' : indexHtml);
       }
       const r = routes.find((x) => x.method === req.method && x.re.test(p));
