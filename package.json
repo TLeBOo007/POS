@@ -1,0 +1,11 @@
+{
+  "name": "beanbrew-pos",
+  "version": "1.0.0",
+  "description": "BeanBrew Coffee POS System",
+  "scripts": {
+    "start": "npx serve -s . -l $PORT"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
