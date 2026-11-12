@@ -1,11 +1,11 @@
 {
-  "name": "beanbrew-pos",
+  "name": "doimek-pos",
   "version": "1.0.0",
-  "description": "BeanBrew Coffee POS System",
+  "private": true,
+  "description": "ระบบขายหน้าร้านกลาง สำหรับสำนักงานใหญ่และสาขาเฟรนไชส์",
+  "engines": { "node": ">=22.13.0" },
   "scripts": {
-    "start": "npx serve -s . -l $PORT"
-  },
-  "engines": {
-    "node": ">=18"
+    "start": "node server.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js"
   }
 }
