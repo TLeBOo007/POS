@@ -1,0 +1,659 @@
+<meta charset="utf-8">
+<title>BeanBrew POS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root {
+  --bg: #F5F2EE;
+  --surface: #FFFFFF;
+  --sidebar: #19362A;
+  --sidebar-h: #224A38;
+  --primary: #1B4332;
+  --primary-h: #256B4A;
+  --primary-s: #E4EDE8;
+  --text: #1A1815;
+  --text2: #5C5650;
+  --text3: #9C9590;
+  --brd: #DDD9D4;
+  --brd-lt: #EDEBE7;
+  --red: #C53030;
+  --green: #1A8045;
+  --r: 6px;
+  --font: 'IBM Plex Sans Thai', 'Inter', system-ui, sans-serif;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141210;--surface:#201D1A;--sidebar:#0C1C14;--sidebar-h:#153325;
+  --primary:#5CB87A;--primary-h:#48A565;--primary-s:#1B3328;
+  --text:#F0EDEA;--text2:#A09890;--text3:#706860;
+  --brd:#383330;--brd-lt:#2A2622;--red:#EF5350;--green:#4ADE80;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141210;--surface:#201D1A;--sidebar:#0C1C14;--sidebar-h:#153325;
+  --primary:#5CB87A;--primary-h:#48A565;--primary-s:#1B3328;
+  --text:#F0EDEA;--text2:#A09890;--text3:#706860;
+  --brd:#383330;--brd-lt:#2A2622;--red:#EF5350;--green:#4ADE80;
+  color-scheme:dark}
+
+html,body{height:100%;margin:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+*,*::before,*::after{box-sizing:border-box}
+button{font-family:inherit;cursor:pointer;border:none;background:none;padding:0;color:inherit;font-size:inherit;line-height:inherit}
+button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+input{font-family:inherit;border:none;outline:none;background:none;color:inherit}
+
+.app{display:flex;flex-direction:column;height:100%}
+
+/* TopBar */
+.topbar{display:flex;align-items:center;height:48px;padding:0 20px 0 0;background:var(--surface);border-bottom:1px solid var(--brd);font-size:13px;flex-shrink:0;gap:16px}
+.topbar-left{display:flex;align-items:center;gap:12px;padding-left:16px}
+.topbar-brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;color:var(--primary);letter-spacing:-.01em}
+.topbar-sep{width:1px;height:20px;background:var(--brd)}
+.topbar-branch{color:var(--text2);font-size:12.5px}
+.topbar-spacer{flex:1}
+.topbar-right{display:flex;align-items:center;gap:14px;color:var(--text2);font-size:12.5px}
+.topbar-user{font-weight:500;color:var(--text)}
+.topbar-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+.topbar-status{display:flex;align-items:center;gap:5px}
+.topbar-time{font-variant-numeric:tabular-nums}
+
+/* Sidebar */
+.main{display:flex;flex:1;min-height:0}
+.sidebar{width:56px;background:var(--sidebar);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px;flex-shrink:0;z-index:2}
+.sb-btn{width:40px;height:40px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.45);transition:all .15s;position:relative}
+.sb-btn:hover{background:var(--sidebar-h);color:rgba(255,255,255,.7)}
+.sb-btn.active{background:var(--sidebar-h);color:#fff}
+.sb-btn .icon{display:flex;align-items:center;justify-content:center;width:20px;height:20px}
+.sb-btn .icon svg{width:100%;height:100%}
+.sb-spacer{flex:1}
+
+/* Products Area */
+.products{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.cat-bar{display:flex;align-items:center;gap:6px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--brd);flex-shrink:0}
+.cat-btn{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;color:var(--text2);transition:all .15s;white-space:nowrap}
+.cat-btn:hover{color:var(--text);background:var(--brd-lt)}
+.cat-btn.active{background:var(--primary);color:#fff}
+.cat-spacer{flex:1}
+.search-wrap{position:relative;width:180px;flex-shrink:0}
+.search-wrap input{width:100%;height:32px;padding:0 10px 0 30px;border-radius:var(--r);background:var(--bg);font-size:12.5px;border:1px solid var(--brd);transition:border-color .15s}
+.search-wrap input:focus{border-color:var(--primary)}
+.search-wrap input::placeholder{color:var(--text3)}
+.search-icon{position:absolute;left:8px;top:7px;color:var(--text3);pointer-events:none;display:flex}
+.search-icon svg{width:16px;height:16px}
+
+/* Product Grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px;padding:14px 16px;overflow-y:auto;flex:1}
+.grid::-webkit-scrollbar{width:4px}
+.grid::-webkit-scrollbar-track{background:transparent}
+.grid::-webkit-scrollbar-thumb{background:var(--brd);border-radius:2px}
+.grid-empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3);font-size:14px}
+
+/* Product Card */
+.card{position:relative;aspect-ratio:1;border-radius:var(--r);overflow:hidden;cursor:pointer;transition:transform .12s,box-shadow .12s;user-select:none;-webkit-tap-highlight-color:transparent}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.12)}
+.card:active{transform:scale(.96);box-shadow:none}
+.card-bg{position:absolute;inset:0}
+.card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:55%;background:linear-gradient(to top,rgba(0,0,0,.55) 0%,transparent 100%);pointer-events:none;z-index:1}
+.card-info{position:absolute;bottom:0;left:0;right:0;padding:8px 10px;z-index:2;color:#fff}
+.card-name{font-size:12px;font-weight:500;line-height:1.35;text-shadow:0 1px 3px rgba(0,0,0,.4);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-price{font-size:11px;opacity:.8;margin-top:2px;font-variant-numeric:tabular-nums}
+.card-badge{position:absolute;top:6px;right:6px;min-width:20px;height:20px;border-radius:10px;background:var(--primary);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 5px;z-index:3;animation:pop .2s ease-out}
+.card.sold{pointer-events:none}
+.card.sold .card-bg{filter:grayscale(.6) brightness(.7)}
+.card.sold::after{height:100%;background:rgba(0,0,0,.35)}
+.card-sold{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:4;background:rgba(0,0,0,.65);color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:3px;letter-spacing:.02em}
+
+/* Order Panel */
+.order{width:340px;background:var(--surface);border-left:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0}
+.order-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--brd);flex-shrink:0}
+.order-title{font-size:14px;font-weight:600}
+.order-count{font-size:12px;color:var(--text3);font-weight:400;margin-left:6px}
+.order-clear{font-size:12.5px;color:var(--primary);font-weight:500;padding:4px 8px;border-radius:var(--r);transition:background .12s}
+.order-clear:hover{background:var(--primary-s)}
+
+.order-list{flex:1;overflow-y:auto;padding:4px 0}
+.order-list::-webkit-scrollbar{width:4px}
+.order-list::-webkit-scrollbar-thumb{background:var(--brd);border-radius:2px}
+
+.o-item{display:flex;align-items:center;gap:10px;padding:10px 16px;transition:background .1s}
+.o-item:not(:last-child){border-bottom:1px solid var(--brd-lt)}
+.o-item:hover{background:var(--brd-lt)}
+.o-qty{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.qty-btn{width:26px;height:26px;border-radius:13px;border:1.5px solid var(--brd);display:flex;align-items:center;justify-content:center;transition:all .12s;color:var(--text2)}
+.qty-btn:hover{border-color:var(--primary);color:var(--primary)}
+.qty-btn svg{width:14px;height:14px}
+.qty-num{width:20px;text-align:center;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.o-info{flex:1;min-width:0}
+.o-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.o-unit{font-size:11.5px;color:var(--text3);margin-top:1px;font-variant-numeric:tabular-nums}
+.o-total{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums;flex-shrink:0;min-width:50px;text-align:right}
+.o-del{width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--text3);border-radius:var(--r);flex-shrink:0;transition:all .12s;margin-left:2px}
+.o-del:hover{color:var(--red);background:rgba(197,48,48,.08)}
+.o-del svg{width:16px;height:16px}
+
+.order-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text3);gap:8px;padding:40px 20px;text-align:center}
+.order-empty svg{width:36px;height:36px;opacity:.3}
+.order-empty-text{font-size:13px}
+
+.order-foot{border-top:1px solid var(--brd);padding:14px 16px;flex-shrink:0}
+.o-row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text2);padding:3px 0;font-variant-numeric:tabular-nums}
+.o-grand{display:flex;justify-content:space-between;font-size:17px;font-weight:700;padding:8px 0 14px;font-variant-numeric:tabular-nums}
+.charge-btn{width:100%;height:48px;border-radius:var(--r);background:var(--primary);color:#fff;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:12px;transition:background .12s}
+.charge-btn:hover:not(:disabled){background:var(--primary-h)}
+.charge-btn:active:not(:disabled){transform:scale(.98)}
+.charge-btn:disabled{opacity:.35;cursor:not-allowed}
+.charge-amt{font-weight:700;font-variant-numeric:tabular-nums}
+
+/* Payment Modal */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100;animation:fadeIn .15s}
+.modal{background:var(--surface);border-radius:10px;width:400px;max-width:calc(100vw - 32px);max-height:calc(100vh - 48px);overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:slideUp .2s ease-out}
+.modal::-webkit-scrollbar{width:4px}
+.modal::-webkit-scrollbar-thumb{background:var(--brd);border-radius:2px}
+.modal-head{padding:18px 20px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--brd)}
+.modal-head h2{font-size:16px;font-weight:600;margin:0}
+.modal-x{width:30px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:all .12s}
+.modal-x:hover{background:var(--bg);color:var(--text)}
+.modal-x svg{width:18px;height:18px}
+.modal-body{padding:20px}
+.modal-total{text-align:center;padding:8px 0 20px}
+.modal-total-label{font-size:12.5px;color:var(--text2)}
+.modal-total-num{font-size:30px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+
+.pay-tabs{display:flex;gap:8px;margin-bottom:18px}
+.pay-tab{flex:1;padding:10px;border-radius:var(--r);border:1.5px solid var(--brd);text-align:center;font-size:12.5px;font-weight:500;transition:all .12s;display:flex;flex-direction:column;align-items:center;gap:4px}
+.pay-tab svg{width:20px;height:20px}
+.pay-tab:hover{border-color:var(--text3)}
+.pay-tab.active{border-color:var(--primary);background:var(--primary-s);color:var(--primary)}
+
+.cash-field{margin-bottom:12px}
+.cash-label{font-size:12px;color:var(--text2);margin-bottom:6px}
+.cash-input{width:100%;height:48px;padding:0 16px;border-radius:var(--r);border:1.5px solid var(--brd);font-size:20px;font-weight:600;text-align:right;font-variant-numeric:tabular-nums;font-family:var(--font);background:var(--surface);color:var(--text);transition:border-color .12s}
+.cash-input:focus{border-color:var(--primary)}
+
+.quick-row{display:flex;gap:6px;margin-bottom:14px}
+.quick-btn{flex:1;height:36px;border-radius:var(--r);border:1px solid var(--brd);font-size:12.5px;font-weight:500;transition:all .12s;font-variant-numeric:tabular-nums}
+.quick-btn:hover{border-color:var(--primary);color:var(--primary)}
+
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.num-btn{height:44px;border-radius:var(--r);border:1px solid var(--brd);font-size:16px;font-weight:500;transition:all .1s}
+.num-btn:hover{background:var(--brd-lt)}
+.num-btn:active{background:var(--brd)}
+.num-btn.fn{font-size:13px;color:var(--text2)}
+
+.change-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--brd);font-variant-numeric:tabular-nums}
+.change-label{font-size:13px;color:var(--text2)}
+.change-num{font-size:20px;font-weight:700;color:var(--green)}
+.change-num.neg{color:var(--red)}
+
+.pay-ok{width:100%;height:48px;border-radius:var(--r);background:var(--primary);color:#fff;font-size:15px;font-weight:600;margin-top:14px;transition:all .12s}
+.pay-ok:hover:not(:disabled){background:var(--primary-h)}
+.pay-ok:disabled{opacity:.35;cursor:not-allowed}
+
+.qr-area{display:flex;flex-direction:column;align-items:center;padding:16px 0 8px}
+.qr-box{width:160px;height:160px;border:2px dashed var(--brd);border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px;text-align:center;padding:16px;line-height:1.5;margin-bottom:10px}
+.qr-hint{font-size:12px;color:var(--text3);text-align:center}
+
+/* Success Modal */
+.success-body{text-align:center;padding:28px 24px}
+.success-check{width:52px;height:52px;border-radius:26px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.success-check svg{width:28px;height:28px}
+.success-body h2{font-size:18px;font-weight:600;margin:0 0 18px}
+.s-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;font-variant-numeric:tabular-nums}
+.s-row.total{font-weight:600;font-size:15px;border-top:1px solid var(--brd);padding-top:10px;margin-top:4px}
+.success-btn{width:100%;height:48px;border-radius:var(--r);background:var(--primary);color:#fff;font-size:15px;font-weight:600;margin-top:22px;transition:background .12s}
+.success-btn:hover{background:var(--primary-h)}
+
+/* Animations */
+@keyframes pop{0%{transform:scale(.5)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Responsive */
+@media(max-width:1100px){.order{width:300px}.grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}.search-wrap{width:140px}}
+@media(max-width:860px){
+  .main{flex-direction:column}
+  .sidebar{width:100%;flex-direction:row;padding:0 8px;gap:0;height:44px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.08)}
+  .sb-btn{width:36px;height:36px}
+  .sb-spacer{display:none}
+  .order{width:100%;border-left:none;border-top:1px solid var(--brd);max-height:45vh}
+  .modal{width:calc(100vw - 24px)}
+  .topbar{padding:0 12px 0 0}.topbar-left{padding-left:12px}
+  .topbar-branch,.topbar-sep{display:none}
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+
+<div id="root"></div>
+
+<script>
+var html = htm.bind(React.createElement);
+var useState = React.useState, useEffect = React.useEffect, useReducer = React.useReducer, useMemo = React.useMemo;
+
+/* ===== Icons (SVG strings) ===== */
+var IC = {
+  store:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v12a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l1.5-5.25A1 1 0 015.46 3h13.08a1 1 0 01.96.75L21 9"/><path d="M9 21V14h6v7"/></svg>',
+  receipt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 3 2V2l-3 2-3-2-3 2-3-2-3 2-3-2z"/><path d="M8 10h8M8 14h5"/></svg>',
+  wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="15" rx="2"/><path d="M2 10h20"/><circle cx="17" cy="15" r="1"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>',
+  box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 01-1 1.73l-7 4a2 2 0 01-2 0l-7-4A2 2 0 013 16V8a2 2 0 011-1.73l7-4a2 2 0 012 0l7 4A2 2 0 0121 8z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
+  fileCheck:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg>',
+  ban:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>',
+  more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  minus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+  banknote:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>',
+  qr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M17 20h3v-3M20 14h-3"/></svg>',
+  credit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
+  cart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>',
+  coffee:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M17 8h1a4 4 0 010 8h-1M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>'
+};
+
+function Icon(props) {
+  var s = props.size || 20;
+  return html`<span class="icon" style=${{width:s+'px',height:s+'px'}} dangerouslySetInnerHTML=${{__html:IC[props.name]||''}} />`;
+}
+
+/* ===== Data ===== */
+var CATS = [
+  {id:'all', name:'ทั้งหมด'},
+  {id:'coffee', name:'กาแฟ'},
+  {id:'tea', name:'ชา'},
+  {id:'bakery', name:'ขนม'},
+  {id:'beverage', name:'เครื่องดื่ม'}
+];
+
+var PRODUCTS = [
+  {id:1,  name:'เอสเพรสโซ่',         price:55,  cat:'coffee',   g:['#9E8E80','#5A4535']},
+  {id:2,  name:'อเมริกาโน่',          price:65,  cat:'coffee',   g:['#8E7E70','#504035']},
+  {id:3,  name:'ลาเต้',              price:75,  cat:'coffee',   g:['#C8B8A8','#8E7E6E']},
+  {id:4,  name:'คาปูชิโน่',           price:75,  cat:'coffee',   g:['#A89888','#6A5A4A']},
+  {id:5,  name:'มอคค่า',             price:85,  cat:'coffee',   g:['#7A6A5A','#3A2A20']},
+  {id:6,  name:'แฟลตไวท์',           price:80,  cat:'coffee',   g:['#D8CCC0','#A08E80']},
+  {id:7,  name:'คาราเมล มัคคิอาโต้',   price:90,  cat:'coffee',   g:['#D09060','#905020']},
+  {id:8,  name:'ดริปกาแฟ',           price:60,  cat:'coffee',   g:['#706050','#3A3025']},
+  {id:9,  name:'ชาเขียว',            price:65,  cat:'tea',      g:['#80B080','#407040']},
+  {id:10, name:'ชาไทย',              price:60,  cat:'tea',      g:['#E09050','#A06020']},
+  {id:11, name:'มัทฉะ ลาเต้',        price:85,  cat:'tea',      g:['#80C090','#408850']},
+  {id:12, name:'ชาเอิร์ลเกรย์',       price:65,  cat:'tea',      g:['#8898A8','#506070']},
+  {id:13, name:'ครัวซองค์',           price:65,  cat:'bakery',   g:['#E8C890','#C09858']},
+  {id:14, name:'มัฟฟิน',             price:55,  cat:'bakery',   g:['#D0A870','#A07840']},
+  {id:15, name:'บราวนี่',             price:65,  cat:'bakery',   g:['#806050','#402820'], sold:true},
+  {id:16, name:'คุกกี้',              price:45,  cat:'bakery',   g:['#D8C0A0','#B09060']},
+  {id:17, name:'ช็อกโกแลต',          price:75,  cat:'beverage', g:['#806050','#402820']},
+  {id:18, name:'สมูทตี้เบอร์รี่',      price:85,  cat:'beverage', g:['#C06090','#802050']},
+  {id:19, name:'น้ำส้มคั้น',          price:70,  cat:'beverage', g:['#F0B060','#D08020'], sold:true},
+  {id:20, name:'โซดามะนาว',          price:55,  cat:'beverage', g:['#60B8C0','#208890']}
+];
+
+var SIDEBAR = [
+  {id:'pos',     icon:'store',     label:'ขายสินค้า'},
+  {id:'orders',  icon:'receipt',   label:'ออเดอร์'},
+  {id:'shift',   icon:'wallet',    label:'กะ/เงินสด'},
+  {id:'sales',   icon:'chart',     label:'สรุปยอด'},
+  {id:'stock',   icon:'box',       label:'สต็อก'},
+  {id:'staff',   icon:'users',     label:'พนักงาน'},
+  {id:'audit',   icon:'fileCheck', label:'ตรวจสอบ'},
+  {id:'soldout', icon:'ban',       label:'เมนูหมด'}
+];
+
+var TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+function fmt(n) { return '฿' + n.toLocaleString('en-US'); }
+function fmtDate(d) { return d.getDate() + ' ' + TH_MONTHS[d.getMonth()] + ' ' + (d.getFullYear() + 543); }
+function fmtTime(d) { return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+
+function getQuickAmounts(total) {
+  if (total <= 0) return [];
+  var steps = [10, 50, 100, 500, 1000];
+  var result = [];
+  for (var i = 0; i < steps.length && result.length < 4; i++) {
+    var v = Math.ceil(total / steps[i]) * steps[i];
+    if (v > total && result.indexOf(v) === -1) result.push(v);
+  }
+  if (result.length === 0) result.push(total);
+  return result;
+}
+
+/* ===== Cart Reducer ===== */
+function cartReducer(cart, action) {
+  switch (action.type) {
+    case 'ADD':
+      var found = false;
+      var next = cart.map(function(x) {
+        if (x.id === action.product.id) { found = true; return {id:x.id, product:x.product, qty:x.qty + 1}; }
+        return x;
+      });
+      if (!found) next = next.concat([{id:action.product.id, product:action.product, qty:1}]);
+      return next;
+    case 'INC':
+      return cart.map(function(x) { return x.id === action.id ? {id:x.id, product:x.product, qty:x.qty + 1} : x; });
+    case 'DEC':
+      return cart.map(function(x) { return x.id === action.id ? {id:x.id, product:x.product, qty:Math.max(1, x.qty - 1)} : x; });
+    case 'DEL':
+      return cart.filter(function(x) { return x.id !== action.id; });
+    case 'CLEAR':
+      return [];
+    default: return cart;
+  }
+}
+
+/* ===== Components ===== */
+
+function TopBar() {
+  var s = useState(new Date()), now = s[0], setNow = s[1];
+  useEffect(function() {
+    var id = setInterval(function() { setNow(new Date()); }, 30000);
+    return function() { clearInterval(id); };
+  }, []);
+
+  return html`<div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-brand">
+        <span dangerouslySetInnerHTML=${{__html:IC.coffee}} style=${{width:'20px',height:'20px',display:'inline-flex',color:'var(--primary)'}} />
+        BeanBrew Coffee
+      </div>
+      <div class="topbar-sep" />
+      <div class="topbar-branch">สาขาสยาม</div>
+    </div>
+    <div class="topbar-spacer" />
+    <div class="topbar-right">
+      <span class="topbar-user">สมชาย (ผู้จัดการ)</span>
+      <div class="topbar-sep" />
+      <span class="topbar-time">${fmtDate(now)}  ${fmtTime(now)}</span>
+      <div class="topbar-sep" />
+      <div class="topbar-status">
+        <span class="topbar-dot" />
+        <span>เชื่อมต่อแล้ว</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function Sidebar(props) {
+  return html`<div class="sidebar">
+    ${SIDEBAR.map(function(item) {
+      return html`<button key=${item.id} class=${'sb-btn' + (props.active === item.id ? ' active' : '')}
+        title=${item.label}
+        onClick=${function() { props.onNav(item.id); }}>
+        <${Icon} name=${item.icon} size=${20} />
+      </button>`;
+    })}
+    <div class="sb-spacer" />
+    <button class="sb-btn" title="ตั้งค่า">
+      <${Icon} name="more" size=${20} />
+    </button>
+  </div>`;
+}
+
+function CategoryBar(props) {
+  return html`<div class="cat-bar">
+    ${CATS.map(function(c) {
+      return html`<button key=${c.id} class=${'cat-btn' + (props.active === c.id ? ' active' : '')}
+        onClick=${function() { props.onChange(c.id); }}>
+        ${c.name}
+      </button>`;
+    })}
+    <div class="cat-spacer" />
+    <div class="search-wrap">
+      <span class="search-icon" dangerouslySetInnerHTML=${{__html:IC.search}} />
+      <input type="text" placeholder="ค้นหาสินค้า..." value=${props.search} onInput=${function(e) { props.onSearch(e.target.value); }} />
+    </div>
+  </div>`;
+}
+
+function ProductCard(props) {
+  var p = props.product;
+  var q = props.qty;
+  var grad = 'linear-gradient(145deg, ' + p.g[0] + ' 0%, ' + p.g[1] + ' 100%)';
+
+  return html`<div class=${'card' + (p.sold ? ' sold' : '')} onClick=${props.onAdd}>
+    <div class="card-bg" style=${{background: grad}} />
+    ${q > 0 && html`<div class="card-badge" key=${q}>${q}</div>`}
+    ${p.sold && html`<div class="card-sold">หมด</div>`}
+    <div class="card-info">
+      <div class="card-name">${p.name}</div>
+      <div class="card-price">${fmt(p.price)}</div>
+    </div>
+  </div>`;
+}
+
+function OrderItem(props) {
+  var item = props.item;
+  var p = item.product;
+  return html`<div class="o-item">
+    <div class="o-qty">
+      <button class="qty-btn" onClick=${function() { props.onDec(item.id); }}>
+        <${Icon} name="minus" size=${14} />
+      </button>
+      <span class="qty-num">${item.qty}</span>
+      <button class="qty-btn" onClick=${function() { props.onInc(item.id); }}>
+        <${Icon} name="plus" size=${14} />
+      </button>
+    </div>
+    <div class="o-info">
+      <div class="o-name">${p.name}</div>
+      <div class="o-unit">${fmt(p.price)} / รายการ</div>
+    </div>
+    <div class="o-total">${fmt(p.price * item.qty)}</div>
+    <button class="o-del" onClick=${function() { props.onDel(item.id); }}>
+      <${Icon} name="x" size=${16} />
+    </button>
+  </div>`;
+}
+
+function OrderPanel(props) {
+  var cart = props.cart;
+  var subtotal = props.subtotal;
+  var itemCount = cart.reduce(function(s, x) { return s + x.qty; }, 0);
+
+  return html`<div class="order">
+    <div class="order-head">
+      <div>
+        <span class="order-title">รายการสั่ง</span>
+        ${itemCount > 0 && html`<span class="order-count">(${itemCount})</span>`}
+      </div>
+      ${cart.length > 0 && html`<button class="order-clear" onClick=${function() { props.dispatch({type:'CLEAR'}); }}>ล้าง</button>`}
+    </div>
+
+    ${cart.length === 0
+      ? html`<div class="order-empty">
+          <span dangerouslySetInnerHTML=${{__html:IC.cart}} style=${{width:'36px',height:'36px',opacity:.3,display:'block'}} />
+          <div class="order-empty-text">ยังไม่มีรายการ<br/>เลือกสินค้าเพื่อเริ่มออเดอร์</div>
+        </div>`
+      : html`<div class="order-list">
+          ${cart.map(function(item) {
+            return html`<${OrderItem} key=${item.id} item=${item}
+              onInc=${function(id) { props.dispatch({type:'INC',id:id}); }}
+              onDec=${function(id) { props.dispatch({type:'DEC',id:id}); }}
+              onDel=${function(id) { props.dispatch({type:'DEL',id:id}); }} />`;
+          })}
+        </div>`
+    }
+
+    <div class="order-foot">
+      ${cart.length > 0 && html`<${React.Fragment}>
+        <div class="o-row"><span>รายการ</span><span>${itemCount} ชิ้น</span></div>
+        <div class="o-row"><span>รวม</span><span>${fmt(subtotal)}</span></div>
+      <//>`}
+      <div class="o-grand"><span>ยอดสุทธิ</span><span>${fmt(subtotal)}</span></div>
+      <button class="charge-btn" disabled=${cart.length === 0} onClick=${props.onCharge}>
+        ชำระเงิน <span class="charge-amt">${fmt(subtotal)}</span>
+      </button>
+    </div>
+  </div>`;
+}
+
+function PaymentModal(props) {
+  var total = props.total;
+  var ms = useState('cash'), method = ms[0], setMethod = ms[1];
+  var as = useState(''), amount = as[0], setAmount = as[1];
+
+  var received = parseInt(amount, 10) || 0;
+  var change = received - total;
+  var canConfirm = method === 'cash' ? received >= total : true;
+
+  var quickAmounts = getQuickAmounts(total);
+  var numKeys = ['7','8','9','4','5','6','1','2','3','C','0','del'];
+
+  function onNum(key) {
+    if (key === 'C') setAmount('');
+    else if (key === 'del') setAmount(function(v) { return v.slice(0, -1); });
+    else setAmount(function(v) { return (v + key).slice(0, 7); });
+  }
+
+  return html`<div class="modal-ov" onClick=${function(e) { if (e.target === e.currentTarget) props.onClose(); }}>
+    <div class="modal">
+      <div class="modal-head">
+        <h2>ชำระเงิน</h2>
+        <button class="modal-x" onClick=${props.onClose}><${Icon} name="x" size=${18} /></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-total">
+          <div class="modal-total-label">ยอดที่ต้องชำระ</div>
+          <div class="modal-total-num">${fmt(total)}</div>
+        </div>
+
+        <div class="pay-tabs">
+          <button class=${'pay-tab' + (method === 'cash' ? ' active' : '')} onClick=${function() { setMethod('cash'); }}>
+            <span dangerouslySetInnerHTML=${{__html:IC.banknote}} style=${{width:'20px',height:'20px',display:'inline-block'}} />
+            เงินสด
+          </button>
+          <button class=${'pay-tab' + (method === 'transfer' ? ' active' : '')} onClick=${function() { setMethod('transfer'); setAmount(''); }}>
+            <span dangerouslySetInnerHTML=${{__html:IC.qr}} style=${{width:'20px',height:'20px',display:'inline-block'}} />
+            โอนเงิน
+          </button>
+          <button class=${'pay-tab' + (method === 'other' ? ' active' : '')} onClick=${function() { setMethod('other'); setAmount(''); }}>
+            <span dangerouslySetInnerHTML=${{__html:IC.credit}} style=${{width:'20px',height:'20px',display:'inline-block'}} />
+            อื่นๆ
+          </button>
+        </div>
+
+        ${method === 'cash' && html`<${React.Fragment}>
+          <div class="cash-field">
+            <div class="cash-label">จำนวนเงินที่รับ</div>
+            <input class="cash-input" type="text" inputMode="numeric" value=${amount ? fmt(parseInt(amount,10)) : ''} readOnly placeholder="0" />
+          </div>
+          <div class="quick-row">
+            ${quickAmounts.map(function(v) {
+              return html`<button key=${v} class="quick-btn" onClick=${function() { setAmount(String(v)); }}>${fmt(v)}</button>`;
+            })}
+            <button class="quick-btn" onClick=${function() { setAmount(String(total)); }}>พอดี</button>
+          </div>
+          <div class="numpad">
+            ${numKeys.map(function(k) {
+              var label = k === 'del' ? '⌫' : k;
+              return html`<button key=${k} class=${'num-btn' + (k === 'C' || k === 'del' ? ' fn' : '')} onClick=${function() { onNum(k); }}>${label}</button>`;
+            })}
+          </div>
+          ${received > 0 && html`<div class="change-row">
+            <span class="change-label">เงินทอน</span>
+            <span class=${'change-num' + (change < 0 ? ' neg' : '')}>${change >= 0 ? fmt(change) : '-' + fmt(Math.abs(change))}</span>
+          </div>`}
+        <//>`}
+
+        ${method === 'transfer' && html`<div class="qr-area">
+          <div class="qr-box">สร้าง QR Code<br/>จากระบบชำระเงิน</div>
+          <div class="qr-hint">สแกน QR Code เพื่อชำระเงิน ${fmt(total)}</div>
+        </div>`}
+
+        ${method === 'other' && html`<div class="qr-area">
+          <div class="qr-box" style=${{height:'100px'}}>เลือกช่องทางชำระเงินอื่น</div>
+          <div class="qr-hint">บัตรเครดิต, e-Wallet, คูปอง</div>
+        </div>`}
+
+        <button class="pay-ok" disabled=${!canConfirm} onClick=${function() {
+          props.onConfirm({method:method, total:total, received:received, change:Math.max(0, change)});
+        }}>
+          ยืนยันการชำระเงิน
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function SuccessModal(props) {
+  var d = props.data;
+  var methodNames = {cash:'เงินสด', transfer:'โอนเงิน', other:'อื่นๆ'};
+
+  return html`<div class="modal-ov">
+    <div class="modal" style=${{width:'360px'}}>
+      <div class="success-body">
+        <div class="success-check"><${Icon} name="check" size=${28} /></div>
+        <h2>ชำระเงินสำเร็จ</h2>
+        <div class="s-row"><span>ช่องทาง</span><span>${methodNames[d.method]}</span></div>
+        <div class="s-row"><span>ยอดชำระ</span><span>${fmt(d.total)}</span></div>
+        ${d.method === 'cash' && d.received > 0 && html`<${React.Fragment}>
+          <div class="s-row"><span>รับเงิน</span><span>${fmt(d.received)}</span></div>
+          <div class="s-row total"><span>เงินทอน</span><span>${fmt(d.change)}</span></div>
+        <//>`}
+        <button class="success-btn" onClick=${props.onDone}>เริ่มออเดอร์ใหม่</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ===== App ===== */
+
+function App() {
+  var cr = useReducer(cartReducer, []), cart = cr[0], dispatch = cr[1];
+  var cs = useState('all'), activeCat = cs[0], setActiveCat = cs[1];
+  var ss = useState(''), search = ss[0], setSearch = ss[1];
+  var ps = useState(false), showPay = ps[0], setShowPay = ps[1];
+  var xs = useState(null), success = xs[0], setSuccess = xs[1];
+  var ns = useState('pos');
+
+  var subtotal = cart.reduce(function(s, x) { return s + x.product.price * x.qty; }, 0);
+
+  var filtered = useMemo(function() {
+    return PRODUCTS.filter(function(p) {
+      if (activeCat !== 'all' && p.cat !== activeCat) return false;
+      if (search) {
+        return p.name.toLowerCase().indexOf(search.toLowerCase()) >= 0;
+      }
+      return true;
+    });
+  }, [activeCat, search]);
+
+  function getQty(id) {
+    var item = cart.find(function(x) { return x.id === id; });
+    return item ? item.qty : 0;
+  }
+
+  return html`<div class="app">
+    <${TopBar} />
+    <div class="main">
+      <${Sidebar} active=${ns[0]} onNav=${ns[1]} />
+      <div class="products">
+        <${CategoryBar} active=${activeCat} onChange=${setActiveCat} search=${search} onSearch=${setSearch} />
+        <div class="grid">
+          ${filtered.length === 0
+            ? html`<div class="grid-empty">ไม่พบสินค้าที่ค้นหา</div>`
+            : filtered.map(function(p) {
+                return html`<${ProductCard} key=${p.id} product=${p} qty=${getQty(p.id)}
+                  onAdd=${function() { if (!p.sold) dispatch({type:'ADD', product:p}); }} />`;
+              })
+          }
+        </div>
+      </div>
+      <${OrderPanel} cart=${cart} dispatch=${dispatch} subtotal=${subtotal}
+        onCharge=${function() { setShowPay(true); }} />
+    </div>
+
+    ${showPay && html`<${PaymentModal} total=${subtotal}
+      onClose=${function() { setShowPay(false); }}
+      onConfirm=${function(data) { setShowPay(false); setSuccess(data); dispatch({type:'CLEAR'}); }} />`}
+
+    ${success && html`<${SuccessModal} data=${success}
+      onDone=${function() { setSuccess(null); }} />`}
+  </div>`;
+}
+
+ReactDOM.render(html`<${App} />`, document.getElementById('root'));
+</script>
